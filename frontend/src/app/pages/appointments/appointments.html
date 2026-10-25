@@ -1,0 +1,290 @@
+<section class="page">
+  <h1 class="page-title">{{ 'appointments.title' | translate }}</h1>
+
+  @if (isUnlinkedClient()) {
+    <p-message severity="info">{{ 'appointments.notLinked' | translate }}</p-message>
+  } @else {
+    <div class="toolbar">
+      <p-iconfield class="grow">
+        <p-inputicon class="pi pi-search" />
+        <input
+          pInputText
+          type="search"
+          fluid
+          [placeholder]="'appointments.searchPlaceholder' | translate"
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </p-iconfield>
+
+      <p-select
+        [options]="statuses"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="onStatusChange($event)"
+        [showClear]="true"
+        [placeholder]="'fields.status' | translate"
+      >
+        <ng-template #selectedItem let-status>{{ 'status.' + status | translate }}</ng-template>
+        <ng-template #item let-status>{{ 'status.' + status | translate }}</ng-template>
+      </p-select>
+
+      <p-datepicker
+        [ngModel]="fromFilter()"
+        (ngModelChange)="onFromChange($event)"
+        [dateFormat]="settings.dateFormat().prime"
+        [showClear]="true"
+        [placeholder]="'appointments.from' | translate"
+      />
+      <p-datepicker
+        [ngModel]="toFilter()"
+        (ngModelChange)="onToChange($event)"
+        [dateFormat]="settings.dateFormat().prime"
+        [showClear]="true"
+        [placeholder]="'appointments.to' | translate"
+      />
+
+      @if (auth.canWrite()) {
+        <p-button icon="pi pi-plus" [label]="'appointments.new' | translate" (onClick)="startCreate()" />
+      }
+    </div>
+
+    <p-table
+      [value]="items()"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      [paginator]="true"
+      [rows]="rows()"
+      [first]="first()"
+      [totalRecords]="total()"
+      [loading]="isLoading()"
+      [rowsPerPageOptions]="[10, 25]"
+      [rowHover]="true"
+      dataKey="id"
+    >
+      <ng-template #header>
+        <tr>
+          <th>{{ 'fields.date' | translate }}</th>
+          <th>{{ 'fields.client' | translate }}</th>
+          <th>{{ 'fields.vehicle' | translate }}</th>
+          <th>{{ 'fields.reason' | translate }}</th>
+          <th>{{ 'fields.status' | translate }}</th>
+          <th>{{ 'common.action' | translate }}</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-appointment>
+        <tr class="row-clickable p-selectable-row" (click)="open(appointment)">
+          <td>{{ appointment.date | date: settings.dateFormat().angular + ' HH:mm' }}</td>
+          <td>{{ appointment.clientFirstName }} {{ appointment.clientLastName }}</td>
+          <td>{{ appointment.brand }} {{ appointment.model }}</td>
+          <td class="reason">{{ appointment.reason }}</td>
+          <td>
+            <p-tag
+              [value]="'status.' + appointment.status | translate"
+              [severity]="statusSeverity(appointment.status)"
+            />
+          </td>
+          <td>
+            <p-button
+              [label]="'common.detail' | translate"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="$event.stopPropagation(); open(appointment)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6">{{ 'appointments.empty' | translate }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</section>
+
+<p-drawer
+  [(visible)]="drawerOpen"
+  position="right"
+  [closable]="false"
+  [dismissible]="false"
+  [closeOnEscape]="false"
+  [style]="{ width: 'min(30rem, 100vw)' }"
+>
+  <ng-template #header>
+    <div class="drawer-header">
+      <span class="drawer-title">
+        @switch (mode()) {
+          @case ('create') {
+            {{ 'appointments.new' | translate }}
+          }
+          @case ('edit') {
+            {{ 'common.edit' | translate }}
+          }
+          @default {
+            {{ 'appointments.detail' | translate }}
+          }
+        }
+      </span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        (onClick)="requestClose()"
+      />
+    </div>
+  </ng-template>
+
+  @switch (mode()) {
+    @case ('view') {
+      @if (selected(); as appointment) {
+        <dl class="fact-sheet">
+          <dt>{{ 'fields.date' | translate }}</dt>
+          <dd>{{ appointment.date | date: settings.dateFormat().angular + ' HH:mm' }}</dd>
+          <dt>{{ 'fields.status' | translate }}</dt>
+          <dd>{{ 'status.' + appointment.status | translate }}</dd>
+          <dt>{{ 'fields.client' | translate }}</dt>
+          <dd>{{ selectedName() }}</dd>
+          <dt>{{ 'fields.vehicle' | translate }}</dt>
+          <dd>{{ appointment.brand }} {{ appointment.model }}</dd>
+          <dt>{{ 'fields.plate' | translate }}</dt>
+          <dd>{{ appointment.plate }}</dd>
+          <dt>{{ 'fields.reason' | translate }}</dt>
+          <dd>{{ appointment.reason }}</dd>
+        </dl>
+
+        @if (canChange()) {
+          <div class="drawer-actions">
+            <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
+            <p-button
+              icon="pi pi-check"
+              [label]="'appointments.complete' | translate"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="startConfirm('COMPLETED')"
+            />
+            <p-button
+              icon="pi pi-ban"
+              [label]="'appointments.cancel' | translate"
+              severity="danger"
+              [outlined]="true"
+              (onClick)="startConfirm('CANCELLED')"
+            />
+          </div>
+        }
+      }
+    }
+
+    @case ('confirm') {
+      <div class="confirm-view">
+        <i class="pi pi-exclamation-triangle confirm-icon"></i>
+        <p>
+          {{
+            (statusAction() === 'CANCELLED' ? 'appointments.confirmCancel' : 'appointments.confirmComplete')
+              | translate: { name: selectedName() }
+          }}
+        </p>
+        <div class="drawer-actions">
+          <p-button
+            [label]="'common.confirm' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+            (onClick)="confirmStatusChange()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="mode.set('view')"
+          />
+        </div>
+      </div>
+    }
+
+    @default {
+      <form class="drawer-form" [formGroup]="appointmentForm" (ngSubmit)="save()" novalidate>
+        <div class="field">
+          <label for="client">{{ 'fields.client' | translate }}</label>
+          <p-autocomplete
+            inputId="client"
+            formControlName="client"
+            [suggestions]="clientSuggestions()"
+            [optionLabel]="clientLabel"
+            [forceSelection]="true"
+            [dropdown]="true"
+            [placeholder]="'appointments.clientPlaceholder' | translate"
+            (completeMethod)="searchClients($event)"
+            (onSelect)="onClientSelected($event.value)"
+            fluid
+          />
+          @if (appointmentForm.controls.client.touched && appointmentForm.controls.client.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="vehicle">{{ 'fields.vehicle' | translate }}</label>
+          <p-select
+            inputId="vehicle"
+            formControlName="vehicleId"
+            [options]="vehicleOptions()"
+            optionLabel="label"
+            optionValue="id"
+            [placeholder]="'appointments.vehiclePlaceholder' | translate"
+            [emptyMessage]="'appointments.noVehicle' | translate"
+            fluid
+          />
+          @if (appointmentForm.controls.vehicleId.touched && appointmentForm.controls.vehicleId.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="date">{{ 'fields.date' | translate }}</label>
+          <p-datepicker
+            inputId="date"
+            formControlName="date"
+            [showTime]="true"
+            [minDate]="now"
+            [dateFormat]="settings.dateFormat().prime"
+            appendTo="body"
+            fluid
+          />
+          @if (appointmentForm.controls.date.touched && appointmentForm.controls.date.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="reason">{{ 'fields.reason' | translate }}</label>
+          <textarea pTextarea id="reason" rows="3" formControlName="reason" fluid></textarea>
+          @if (appointmentForm.controls.reason.touched && appointmentForm.controls.reason.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+
+        <div class="drawer-actions">
+          <p-button
+            type="submit"
+            [label]="'common.save' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="cancelForm()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+  }
+</p-drawer>

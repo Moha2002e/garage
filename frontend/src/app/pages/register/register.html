@@ -1,0 +1,67 @@
+<div class="auth-page">
+  <p-card class="auth-card">
+    <div class="lang-switch"><app-language-switch /></div>
+    <h1 class="auth-title">{{ 'register.title' | translate }}</h1>
+
+    <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field">
+        <label for="firstName">{{ 'fields.firstName' | translate }}</label>
+        <input pInputText id="firstName" formControlName="firstName" autocomplete="given-name" fluid />
+        @if (registerForm.controls.firstName.touched && registerForm.controls.firstName.errors) {
+          <small class="field-error">{{ 'validation.required' | translate }}</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="lastName">{{ 'fields.lastName' | translate }}</label>
+        <input pInputText id="lastName" formControlName="lastName" autocomplete="family-name" fluid />
+        @if (registerForm.controls.lastName.touched && registerForm.controls.lastName.errors) {
+          <small class="field-error">{{ 'validation.required' | translate }}</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">{{ 'fields.email' | translate }}</label>
+        <input pInputText id="email" type="email" formControlName="email" autocomplete="email" fluid />
+        @if (registerForm.controls.email.touched && registerForm.controls.email.errors) {
+          <small class="field-error">
+            {{ (registerForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">{{ 'fields.password' | translate }}</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          autocomplete="new-password"
+          fluid
+        />
+        @if (registerForm.controls.password.touched && registerForm.controls.password.errors) {
+          <small class="field-error">
+            {{ (registerForm.controls.password.errors['required'] ? 'validation.required' : 'validation.passwordLength') | translate }}
+          </small>
+        }
+      </div>
+
+      <p-button
+        type="submit"
+        [label]="'register.submit' | translate"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+        fluid
+      />
+
+      @if (submitError(); as message) {
+        <p-message severity="error">{{ message }}</p-message>
+      }
+    </form>
+
+    <div class="auth-links">
+      <a routerLink="/login">{{ 'register.haveAccount' | translate }}</a>
+    </div>
+  </p-card>
+</div>

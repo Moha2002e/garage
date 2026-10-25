@@ -1,0 +1,164 @@
+{
+  "common": {
+    "action": "Action",
+    "detail": "Details",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "leave": "Leave",
+    "stay": "Stay"
+  },
+  "leave": {
+    "title": "Unsaved changes",
+    "message": "Are you sure you want to leave? Your changes will be lost."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again in a moment.",
+    "network": "The server cannot be reached. Check your connection and try again.",
+    "formInvalid": "The form contains errors. Please fix the highlighted fields."
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "The e-mail address is not valid.",
+    "passwordLength": "The password must be between 8 and 72 characters long.",
+    "passwordMismatch": "The two passwords do not match.",
+    "phone": "The phone number is not valid."
+  },
+  "fields": {
+    "email": "E-mail address",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "phone": "Phone",
+    "status": "Status",
+    "date": "Date",
+    "client": "Client",
+    "vehicle": "Vehicle",
+    "reason": "Reason",
+    "plate": "License plate",
+    "brand": "Brand",
+    "model": "Model",
+    "role": "Role",
+    "language": "Language"
+  },
+  "roles": {
+    "ADMIN": "Administrator",
+    "EMPLOYEE": "Employee",
+    "CLIENT": "Client"
+  },
+  "status": {
+    "PLANNED": "Planned",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+  },
+  "menu": {
+    "clients": "Clients",
+    "appointments": "Appointments",
+    "statistics": "Statistics",
+    "users": "Accounts",
+    "settings": "Settings",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Log in",
+    "rememberMe": "Remember me",
+    "submit": "Log in",
+    "forgot": "Forgot your password?",
+    "createAccount": "Create an account"
+  },
+  "register": {
+    "title": "Create an account",
+    "submit": "Sign up",
+    "haveAccount": "I already have an account",
+    "success": "Your account has been created. You can now log in."
+  },
+  "forgot": {
+    "title": "Forgot your password",
+    "intro": "Enter your e-mail address. We will send you a link to choose a new password.",
+    "submit": "Send the link",
+    "sent": "If this address matches an account, an e-mail has just been sent to it. The link is valid for 30 minutes.",
+    "back": "Back to log in"
+  },
+  "reset": {
+    "title": "New password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm the password",
+    "submit": "Save the password",
+    "success": "Your password has been changed. You can now log in.",
+    "missingToken": "This link is not valid. Please request a new reset link.",
+    "requestNew": "Request a new link"
+  },
+  "clients": {
+    "title": "Clients",
+    "searchPlaceholder": "Search for a client",
+    "new": "New client",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No clients",
+    "vehicles": "Vehicles",
+    "noVehicle": "No vehicle registered.",
+    "addVehicle": "Add a vehicle",
+    "deactivate": "Deactivate",
+    "activate": "Reactivate",
+    "confirmDeactivate": "Are you sure you want to deactivate {{name}}?",
+    "confirmActivate": "Are you sure you want to reactivate {{name}}?",
+    "created": "Client {{name}} has been created.",
+    "updated": "Client {{name}} has been updated.",
+    "deactivated": "Client {{name}} has been deactivated.",
+    "activated": "Client {{name}} has been reactivated.",
+    "vehicleCreated": "Vehicle {{name}} has been added."
+  },
+  "appointments": {
+    "title": "Appointments",
+    "searchPlaceholder": "Search for an appointment",
+    "new": "New appointment",
+    "detail": "Appointment",
+    "from": "From",
+    "to": "Until",
+    "empty": "No appointments",
+    "notLinked": "Your account is not linked to a client record yet. The garage must link it first so that your appointments appear here.",
+    "complete": "Mark as completed",
+    "cancel": "Cancel the appointment",
+    "confirmCancel": "Are you sure you want to cancel the appointment of {{name}}?",
+    "confirmComplete": "Mark the appointment of {{name}} as completed?",
+    "clientPlaceholder": "Search for an active client",
+    "vehiclePlaceholder": "Choose a vehicle",
+    "noVehicle": "This client has no vehicle yet.",
+    "created": "The appointment of {{name}} has been created.",
+    "updated": "The appointment of {{name}} has been updated.",
+    "cancelled": "The appointment of {{name}} has been cancelled.",
+    "completed": "The appointment of {{name}} is completed."
+  },
+  "stats": {
+    "title": "Statistics",
+    "year": "Year",
+    "chartTitle": "Appointments per month",
+    "planned": "Planned",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "xAxis": "Month",
+    "yAxis": "Number of appointments"
+  },
+  "users": {
+    "title": "Accounts",
+    "searchPlaceholder": "Search for an account",
+    "linkedClient": "Client record",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "empty": "No accounts",
+    "clientPlaceholder": "Search for an active client",
+    "updated": "The account of {{name}} has been updated."
+  },
+  "settings": {
+    "title": "Settings",
+    "darkMode": "Dark mode",
+    "language": "Language",
+    "dateFormat": "Date format",
+    "export": "Excel export",
+    "exportClients": "Export clients",
+    "exportAppointments": "Export appointments",
+    "exported": "The file has been downloaded."
+  }
+}

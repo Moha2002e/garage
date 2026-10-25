@@ -1,0 +1,55 @@
+<div class="auth-page">
+  <p-card class="auth-card">
+    <div class="lang-switch"><app-language-switch /></div>
+    <h1 class="auth-title">{{ 'login.title' | translate }}</h1>
+
+    <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field">
+        <label for="email">{{ 'fields.email' | translate }}</label>
+        <input pInputText id="email" type="email" formControlName="email" autocomplete="username" fluid />
+        @if (loginForm.controls.email.touched && loginForm.controls.email.errors) {
+          <small class="field-error">
+            {{ (loginForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
+          </small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">{{ 'fields.password' | translate }}</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          autocomplete="current-password"
+          fluid
+        />
+        @if (loginForm.controls.password.touched && loginForm.controls.password.errors) {
+          <small class="field-error">{{ 'validation.required' | translate }}</small>
+        }
+      </div>
+
+      <div class="remember">
+        <p-checkbox inputId="rememberMe" formControlName="rememberMe" [binary]="true" />
+        <label for="rememberMe">{{ 'login.rememberMe' | translate }}</label>
+      </div>
+
+      <p-button
+        type="submit"
+        [label]="'login.submit' | translate"
+        [loading]="isSubmitting()"
+        [disabled]="isSubmitting()"
+        fluid
+      />
+
+      @if (submitError(); as message) {
+        <p-message severity="error">{{ message }}</p-message>
+      }
+    </form>
+
+    <div class="auth-links">
+      <a routerLink="/forgot-password">{{ 'login.forgot' | translate }}</a>
+      <a routerLink="/register">{{ 'login.createAccount' | translate }}</a>
+    </div>
+  </p-card>
+</div>

@@ -1,0 +1,179 @@
+<section class="page">
+  <h1 class="page-title">{{ 'users.title' | translate }}</h1>
+
+  <div class="toolbar">
+    <p-iconfield class="grow">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="search"
+        fluid
+        [placeholder]="'users.searchPlaceholder' | translate"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </p-iconfield>
+
+    <p-select
+      [options]="roles"
+      [ngModel]="roleFilter()"
+      (ngModelChange)="onRoleFilterChange($event)"
+      [showClear]="true"
+      [placeholder]="'fields.role' | translate"
+    >
+      <ng-template #selectedItem let-role>{{ 'roles.' + role | translate }}</ng-template>
+      <ng-template #item let-role>{{ 'roles.' + role | translate }}</ng-template>
+    </p-select>
+  </div>
+
+  <p-table
+    [value]="items()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="rows()"
+    [first]="first()"
+    [totalRecords]="total()"
+    [loading]="isLoading()"
+    [rowsPerPageOptions]="[10, 25]"
+    [rowHover]="true"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>{{ 'fields.lastName' | translate }}</th>
+        <th>{{ 'fields.firstName' | translate }}</th>
+        <th>{{ 'fields.email' | translate }}</th>
+        <th>{{ 'fields.role' | translate }}</th>
+        <th>{{ 'users.linkedClient' | translate }}</th>
+        <th>{{ 'common.action' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-user>
+      <tr class="row-clickable p-selectable-row" (click)="open(user)">
+        <td>{{ user.lastName }}</td>
+        <td>{{ user.firstName }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ 'roles.' + user.role | translate }}</td>
+        <td>
+          @if (user.role === 'CLIENT') {
+            <p-tag
+              [value]="(user.clientId ? 'users.linked' : 'users.notLinked') | translate"
+              [severity]="user.clientId ? 'success' : 'warn'"
+            />
+          }
+        </td>
+        <td>
+          <p-button
+            [label]="'common.detail' | translate"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="$event.stopPropagation(); open(user)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">{{ 'users.empty' | translate }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-drawer
+  [(visible)]="drawerOpen"
+  position="right"
+  [closable]="false"
+  [dismissible]="false"
+  [closeOnEscape]="false"
+  [style]="{ width: 'min(30rem, 100vw)' }"
+>
+  <ng-template #header>
+    <div class="drawer-header">
+      <span class="drawer-title">{{ selectedName() }}</span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        (onClick)="requestClose()"
+      />
+    </div>
+  </ng-template>
+
+  @if (selected(); as user) {
+    @if (!isEditing()) {
+      <dl class="fact-sheet">
+        <dt>{{ 'fields.email' | translate }}</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>{{ 'fields.role' | translate }}</dt>
+        <dd>{{ 'roles.' + user.role | translate }}</dd>
+        <dt>{{ 'fields.language' | translate }}</dt>
+        <dd>{{ user.language }}</dd>
+        @if (user.role === 'CLIENT') {
+          <dt>{{ 'users.linkedClient' | translate }}</dt>
+          <dd>{{ user.clientId ? linkedClientName() : ('users.notLinked' | translate) }}</dd>
+        }
+      </dl>
+      <div class="drawer-actions">
+        <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
+      </div>
+    } @else {
+      <form class="drawer-form" [formGroup]="userForm" (ngSubmit)="save()" novalidate>
+        <div class="field">
+          <label for="role">{{ 'fields.role' | translate }}</label>
+          <p-select
+            inputId="role"
+            formControlName="role"
+            [options]="roles"
+            [disabled]="!auth.isAdmin()"
+            fluid
+          >
+            <ng-template #selectedItem let-role>{{ 'roles.' + role | translate }}</ng-template>
+            <ng-template #item let-role>{{ 'roles.' + role | translate }}</ng-template>
+          </p-select>
+        </div>
+
+        @if (userForm.controls.role.value === 'CLIENT') {
+          <div class="field">
+            <label for="client">{{ 'users.linkedClient' | translate }}</label>
+            <p-autocomplete
+              inputId="client"
+              formControlName="client"
+              [suggestions]="clientSuggestions()"
+              [optionLabel]="clientLabel"
+              [forceSelection]="true"
+              [dropdown]="true"
+              [showClear]="true"
+              [placeholder]="'users.clientPlaceholder' | translate"
+              (completeMethod)="searchClients($event)"
+              fluid
+            />
+          </div>
+        }
+
+        <div class="drawer-actions">
+          <p-button
+            type="submit"
+            [label]="'common.save' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="cancelEdit()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+  }
+</p-drawer>

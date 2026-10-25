@@ -1,0 +1,32 @@
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <i class="pi pi-wrench"></i>
+      <span>Garage</span>
+    </div>
+
+    <p-panelmenu [model]="menuItems()" [multiple]="false" styleClass="menu" />
+
+    <div class="sidebar-footer">
+      @if (auth.user(); as user) {
+        <div class="user">
+          <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+          <small>{{ 'roles.' + user.role | translate }}</small>
+        </div>
+      }
+      <app-language-switch />
+      <p-button
+        [label]="'menu.logout' | translate"
+        icon="pi pi-sign-out"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="onLogout()"
+        fluid
+      />
+    </div>
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

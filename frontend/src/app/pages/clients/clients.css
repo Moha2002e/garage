@@ -1,0 +1,28 @@
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.section-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vehicle-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+  margin: 0;
+}
+
+.confirm-icon {
+  font-size: 2rem;
+  color: var(--p-orange-500);
+}

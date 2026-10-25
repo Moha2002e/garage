@@ -1,0 +1,17 @@
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.reason {
+  max-width: 20rem;
+  overflow-wrap: anywhere;
+}
+
+.confirm-icon {
+  font-size: 2rem;
+  color: var(--p-orange-500);
+}

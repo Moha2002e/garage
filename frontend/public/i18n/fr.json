@@ -1,0 +1,164 @@
+{
+  "common": {
+    "action": "Action",
+    "detail": "Détail",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "close": "Fermer",
+    "leave": "Quitter",
+    "stay": "Rester"
+  },
+  "leave": {
+    "title": "Modifications non enregistrées",
+    "message": "Êtes-vous sûr de vouloir quitter ? Vos modifications seront perdues."
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessayez dans un instant.",
+    "network": "Le serveur est injoignable. Vérifiez votre connexion puis réessayez.",
+    "formInvalid": "Le formulaire contient des erreurs. Corrigez les champs signalés."
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "email": "L'adresse e-mail n'est pas valide.",
+    "passwordLength": "Le mot de passe doit contenir entre 8 et 72 caractères.",
+    "passwordMismatch": "Les deux mots de passe ne sont pas identiques.",
+    "phone": "Le numéro de téléphone n'est pas valide."
+  },
+  "fields": {
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "phone": "Téléphone",
+    "status": "Statut",
+    "date": "Date",
+    "client": "Client",
+    "vehicle": "Véhicule",
+    "reason": "Motif",
+    "plate": "Plaque d'immatriculation",
+    "brand": "Marque",
+    "model": "Modèle",
+    "role": "Rôle",
+    "language": "Langue"
+  },
+  "roles": {
+    "ADMIN": "Administrateur",
+    "EMPLOYEE": "Employé",
+    "CLIENT": "Client"
+  },
+  "status": {
+    "PLANNED": "Planifié",
+    "COMPLETED": "Terminé",
+    "CANCELLED": "Annulé"
+  },
+  "menu": {
+    "clients": "Clients",
+    "appointments": "Rendez-vous",
+    "statistics": "Statistiques",
+    "users": "Comptes",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter"
+  },
+  "login": {
+    "title": "Connexion",
+    "rememberMe": "Se souvenir de moi",
+    "submit": "Se connecter",
+    "forgot": "Mot de passe oublié ?",
+    "createAccount": "Créer un compte"
+  },
+  "register": {
+    "title": "Créer un compte",
+    "submit": "S'inscrire",
+    "haveAccount": "J'ai déjà un compte",
+    "success": "Votre compte a été créé. Vous pouvez vous connecter."
+  },
+  "forgot": {
+    "title": "Mot de passe oublié",
+    "intro": "Indiquez votre adresse e-mail. Nous vous enverrons un lien pour choisir un nouveau mot de passe.",
+    "submit": "Envoyer le lien",
+    "sent": "Si cette adresse correspond à un compte, un e-mail vient de lui être envoyé. Le lien est valable 30 minutes.",
+    "back": "Retour à la connexion"
+  },
+  "reset": {
+    "title": "Nouveau mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "submit": "Enregistrer le mot de passe",
+    "success": "Votre mot de passe a été modifié. Vous pouvez vous connecter.",
+    "missingToken": "Ce lien n'est pas valide. Demandez un nouveau lien de réinitialisation.",
+    "requestNew": "Demander un nouveau lien"
+  },
+  "clients": {
+    "title": "Clients",
+    "searchPlaceholder": "Rechercher un client",
+    "new": "Nouveau client",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "empty": "Aucun client",
+    "vehicles": "Véhicules",
+    "noVehicle": "Aucun véhicule enregistré.",
+    "addVehicle": "Ajouter un véhicule",
+    "deactivate": "Désactiver",
+    "activate": "Réactiver",
+    "confirmDeactivate": "Êtes-vous sûr de vouloir désactiver {{name}} ?",
+    "confirmActivate": "Êtes-vous sûr de vouloir réactiver {{name}} ?",
+    "created": "Le client {{name}} a été créé.",
+    "updated": "Le client {{name}} a été modifié.",
+    "deactivated": "Le client {{name}} a été désactivé.",
+    "activated": "Le client {{name}} a été réactivé.",
+    "vehicleCreated": "Le véhicule {{name}} a été ajouté."
+  },
+  "appointments": {
+    "title": "Rendez-vous",
+    "searchPlaceholder": "Rechercher un rendez-vous",
+    "new": "Nouveau rendez-vous",
+    "detail": "Rendez-vous",
+    "from": "À partir du",
+    "to": "Jusqu'au",
+    "empty": "Aucun rendez-vous",
+    "notLinked": "Votre compte n'est pas encore rattaché à une fiche client. Le garage doit d'abord faire ce rattachement pour que vos rendez-vous apparaissent ici.",
+    "complete": "Marquer comme terminé",
+    "cancel": "Annuler le rendez-vous",
+    "confirmCancel": "Êtes-vous sûr de vouloir annuler le rendez-vous de {{name}} ?",
+    "confirmComplete": "Marquer le rendez-vous de {{name}} comme terminé ?",
+    "clientPlaceholder": "Rechercher un client actif",
+    "vehiclePlaceholder": "Choisir un véhicule",
+    "noVehicle": "Ce client n'a pas encore de véhicule.",
+    "created": "Le rendez-vous de {{name}} a été créé.",
+    "updated": "Le rendez-vous de {{name}} a été modifié.",
+    "cancelled": "Le rendez-vous de {{name}} a été annulé.",
+    "completed": "Le rendez-vous de {{name}} est terminé."
+  },
+  "stats": {
+    "title": "Statistiques",
+    "year": "Année",
+    "chartTitle": "Rendez-vous par mois",
+    "planned": "Planifiés",
+    "completed": "Terminés",
+    "cancelled": "Annulés",
+    "xAxis": "Mois",
+    "yAxis": "Nombre de rendez-vous"
+  },
+  "users": {
+    "title": "Comptes",
+    "searchPlaceholder": "Rechercher un compte",
+    "linkedClient": "Fiche client",
+    "linked": "Rattaché",
+    "notLinked": "Non rattaché",
+    "empty": "Aucun compte",
+    "clientPlaceholder": "Rechercher un client actif",
+    "updated": "Le compte de {{name}} a été modifié."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "darkMode": "Mode sombre",
+    "language": "Langue",
+    "dateFormat": "Format de date",
+    "export": "Export Excel",
+    "exportClients": "Exporter les clients",
+    "exportAppointments": "Exporter les rendez-vous",
+    "exported": "Le fichier a été téléchargé."
+  }
+}

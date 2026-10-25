@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-clients
+      author: garage
+      changes:
+        - createTable:
+            tableName: clients
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: last_name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: first_name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: email, type: varchar(255), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_clients_email } }
+              - column: { name: phone, type: varchar(30) }
+              - column: { name: active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 002-users
+      author: garage
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: email, type: varchar(255), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_users_email } }
+              - column: { name: password_hash, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: first_name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: last_name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: role, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: language, type: varchar(2), defaultValue: FR, constraints: { nullable: false } }
+              - column: { name: enabled, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: client_id, type: uuid, constraints: { unique: true, uniqueConstraintName: uq_users_client, foreignKeyName: fk_users_client, references: clients(id) } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 003-password-reset-tokens
+      author: garage
+      changes:
+        - createTable:
+            tableName: password_reset_tokens
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: user_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_prt_user, references: users(id) } }
+              - column: { name: token_hash, type: varchar(64), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_prt_hash } }
+              - column: { name: expires_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: used, type: boolean, defaultValueBoolean: false, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 004-vehicles
+      author: garage
+      changes:
+        - createTable:
+            tableName: vehicles
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: client_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_vehicles_client, references: clients(id) } }
+              - column: { name: plate, type: varchar(9), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_vehicles_plate } }
+              - column: { name: brand, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: model, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 005-appointments
+      author: garage
+      changes:
+        - createTable:
+            tableName: appointments
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: client_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_appt_client, references: clients(id) } }
+              - column: { name: vehicle_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_appt_vehicle, references: vehicles(id) } }
+              - column: { name: appointment_date, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: reason, type: varchar(500), constraints: { nullable: false } }
+              - column: { name: status, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appt_date
+            columns:
+              - column: { name: appointment_date }
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appt_client
+            columns:
+              - column: { name: client_id }

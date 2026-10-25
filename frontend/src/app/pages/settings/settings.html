@@ -1,0 +1,57 @@
+<section class="page">
+  <h1 class="page-title">{{ 'settings.title' | translate }}</h1>
+
+  <div class="settings-list">
+    <div class="setting">
+      <label for="dark">{{ 'settings.darkMode' | translate }}</label>
+      <p-toggleswitch
+        inputId="dark"
+        [ngModel]="settings.theme() === 'dark'"
+        (ngModelChange)="onThemeChange($event)"
+      />
+    </div>
+
+    <div class="setting">
+      <span>{{ 'settings.language' | translate }}</span>
+      <app-language-switch />
+    </div>
+
+    <div class="setting">
+      <label for="dateFormat">{{ 'settings.dateFormat' | translate }}</label>
+      <p-select
+        inputId="dateFormat"
+        [options]="dateFormats"
+        optionLabel="label"
+        optionValue="id"
+        [ngModel]="settings.dateFormatId()"
+        (ngModelChange)="settings.setDateFormat($event)"
+      />
+    </div>
+
+    @if (auth.isAdmin()) {
+      <div class="setting">
+        <span>{{ 'settings.export' | translate }}</span>
+        <div class="export-actions">
+          <p-button
+            icon="pi pi-download"
+            [label]="'settings.exportClients' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="isExporting()"
+            [disabled]="isExporting()"
+            (onClick)="export('clients')"
+          />
+          <p-button
+            icon="pi pi-download"
+            [label]="'settings.exportAppointments' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [loading]="isExporting()"
+            [disabled]="isExporting()"
+            (onClick)="export('appointments')"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</section>

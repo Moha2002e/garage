@@ -46,7 +46,8 @@ def new_id(): return str(uuid.UUID(int=rnd.getrandbits(128), version=4))
 def q(s): return "'" + str(s).replace("'", "''") + "'"
 def ts(d): return q(d.astimezone(dt.timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00"))
 def money(x): return f"{x:.2f}"
-def round2(x): return (x * 100 + 0.5) // 1 / 100
+from decimal import Decimal, ROUND_HALF_UP
+def round2(x): return float(Decimal(repr(round(x, 6))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
 
 pw_hash = bcrypt.hashpw(PASSWORD.encode(), bcrypt.gensalt(rounds=10, prefix=b"2a")).decode()
 plates = set()

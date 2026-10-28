@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { LeaveConfirmService } from '../services/leave-confirm.service';
 
-/** Les pages avec un formulaire dans un tiroir implémentent cette interface. */
+/** Les pages avec un formulaire dans une fenêtre de dialogue implémentent cette interface. */
 export interface HasUnsavedChanges {
   hasUnsavedChanges(): boolean;
 }

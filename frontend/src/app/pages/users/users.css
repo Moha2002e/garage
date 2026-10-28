@@ -1,7 +1,36 @@
-.drawer-header {
+
+.rules {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
+}
+
+.rules li {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.rules li.ok {
+  color: var(--p-green-600);
+}
+
+.switch-field {
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  width: 100%;
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+}
+
+.confirm-icon {
+  font-size: 2rem;
+  color: var(--p-orange-500);
 }

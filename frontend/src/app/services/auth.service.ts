@@ -81,8 +81,8 @@ export class AuthService {
     this.user.set(null);
   }
 
-  /** Page d'accueil selon le rôle : le CLIENT ne voit que ses rendez-vous. */
+  /** Page d'accueil selon le rôle : le CLIENT ne voit que ses rendez-vous, les autres ont le tableau de bord. */
   homePath(): string {
-    return this.role() === 'CLIENT' ? '/appointments' : '/clients';
+    return this.role() === 'CLIENT' ? '/appointments' : '/dashboard';
   }
 }

@@ -5,6 +5,7 @@ export interface Client {
   email: string;
   phone: string | null;
   active: boolean;
+  createdAt?: string;
 }
 
 export interface ClientRequest {
@@ -12,19 +13,4 @@ export interface ClientRequest {
   firstName: string;
   email: string;
   phone: string | null;
-}
-
-export interface Vehicle {
-  id: string;
-  clientId: string;
-  plate: string;
-  brand: string;
-  model: string;
-}
-
-export interface VehicleRequest {
-  clientId: string;
-  plate: string;
-  brand: string;
-  model: string;
 }

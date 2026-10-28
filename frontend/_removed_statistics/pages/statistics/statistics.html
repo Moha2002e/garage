@@ -1,0 +1,45 @@
+<section class="page page-wide">
+  <h1 class="page-title">{{ 'stats.title' | translate }}</h1>
+
+  <div class="toolbar">
+    <label for="year">{{ 'stats.year' | translate }}</label>
+    <p-select
+      inputId="year"
+      [options]="years"
+      [ngModel]="year()"
+      (ngModelChange)="onYearChange($event)"
+      [disabled]="isLoading()"
+    />
+  </div>
+
+  <div class="kpi-grid">
+    @for (kpi of kpis(); track kpi.key) {
+      <div class="card kpi">
+        <div class="kpi-label">{{ kpi.key | translate }}</div>
+        <div class="kpi-value">{{ kpi.value }}</div>
+      </div>
+    }
+  </div>
+
+  <div class="chart-grid" [class.is-loading]="isLoading()">
+    <div class="card chart-card wide">
+      <h2 class="chart-title">{{ 'stats.chartTitle' | translate }}</h2>
+      <p-chart type="line" [data]="lineData()" [options]="lineOptions()" height="22rem" />
+    </div>
+
+    <div class="card chart-card">
+      <h2 class="chart-title">{{ 'stats.statusTitle' | translate }}</h2>
+      <p-chart type="doughnut" [data]="doughnutData()" [options]="doughnutOptions()" height="20rem" />
+    </div>
+
+    <div class="card chart-card">
+      <h2 class="chart-title">{{ 'stats.revenueTitle' | translate }}</h2>
+      <p-chart type="bar" [data]="revenueData()" [options]="revenueOptions()" height="20rem" />
+    </div>
+
+    <div class="card chart-card">
+      <h2 class="chart-title">{{ 'stats.brandsTitle' | translate }}</h2>
+      <p-chart type="bar" [data]="brandsData()" [options]="brandsOptions()" height="20rem" />
+    </div>
+  </div>
+</section>

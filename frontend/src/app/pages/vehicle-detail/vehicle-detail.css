@@ -1,0 +1,89 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.card-title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.section-title {
+  margin: 0.5rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.card .fact-sheet {
+  margin-bottom: 0;
+}
+
+.client-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+  color: var(--p-text-color);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.client-link:hover {
+  background: var(--p-content-hover-background);
+}
+
+.client-link:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+}
+
+.client-link i {
+  color: var(--p-primary-color);
+}
+
+.client-link span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.link-arrow {
+  color: var(--p-text-muted-color) !important;
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  color: var(--p-text-muted-color);
+}
+
+.state-card i {
+  font-size: 2rem;
+}
+
+.confirm-icon {
+  font-size: 2rem;
+  color: var(--p-orange-500);
+}

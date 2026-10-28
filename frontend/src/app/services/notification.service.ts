@@ -27,6 +27,9 @@ export class NotificationService {
     if (error instanceof HttpErrorResponse && error.status === 0) {
       return this.translate.instant('errors.network');
     }
+    if (error instanceof HttpErrorResponse && error.status === 429) {
+      return this.translate.instant('errors.tooManyRequests');
+    }
     return backendMessage(error) ?? this.translate.instant('errors.generic');
   }
 }

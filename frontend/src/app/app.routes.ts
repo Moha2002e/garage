@@ -32,20 +32,50 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
       {
+        path: 'dashboard',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard)
+      },
+      {
         path: 'clients',
         canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./pages/clients/clients').then((m) => m.Clients)
       },
       {
+        path: 'clients/:id',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/client-detail/client-detail').then((m) => m.ClientDetail)
+      },
+      {
+        path: 'vehicles',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/vehicles/vehicles').then((m) => m.Vehicles)
+      },
+      {
+        path: 'vehicles/:id',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/vehicle-detail/vehicle-detail').then((m) => m.VehicleDetail)
+      },
+      {
         path: 'appointments',
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./pages/appointments/appointments').then((m) => m.Appointments)
       },
+      { path: 'statistics', redirectTo: 'dashboard', pathMatch: 'full' },
       {
-        path: 'statistics',
+        path: 'invoices',
         canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
-        loadComponent: () => import('./pages/statistics/statistics').then((m) => m.Statistics)
+        loadComponent: () => import('./pages/invoices/invoices').then((m) => m.Invoices)
+      },
+      {
+        path: 'invoices/errors',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        loadComponent: () =>
+          import('./pages/invoice-errors/invoice-errors').then((m) => m.InvoiceErrors)
       },
       {
         path: 'users',

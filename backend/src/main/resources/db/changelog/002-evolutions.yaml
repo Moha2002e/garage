@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-vehicles-active
+      author: garage
+      changes:
+        - addColumn:
+            tableName: vehicles
+            columns:
+              - column: { name: active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 007-appointments-duration
+      author: garage
+      changes:
+        - addColumn:
+            tableName: appointments
+            columns:
+              - column: { name: duration_minutes, type: integer, defaultValueNumeric: 60, constraints: { nullable: false } }
+        - createIndex:
+            tableName: appointments
+            indexName: idx_appt_vehicle
+            columns:
+              - column: { name: vehicle_id }
+
+  - changeSet:
+      id: 008-quotes
+      author: garage
+      changes:
+        - createTable:
+            tableName: quotes
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: appointment_id, type: uuid, constraints: { nullable: false, unique: true, uniqueConstraintName: uq_quotes_appointment, foreignKeyName: fk_quotes_appointment, references: appointments(id) } }
+              - column: { name: status, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: total, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createTable:
+            tableName: quote_lines
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: quote_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_quote_lines_quote, references: quotes(id) } }
+              - column: { name: sort_order, type: integer, constraints: { nullable: false } }
+              - column: { name: description, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: quantity, type: "numeric(10,2)", constraints: { nullable: false } }
+              - column: { name: unit_price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: quote_lines
+            indexName: idx_quote_lines_quote
+            columns:
+              - column: { name: quote_id }

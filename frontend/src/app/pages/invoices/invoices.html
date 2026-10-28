@@ -1,0 +1,323 @@
+<section class="page">
+  <div class="header-row">
+    <h1 class="page-title">{{ 'invoices.title' | translate }}</h1>
+    <div class="header-actions">
+      <p-button
+        icon="pi pi-exclamation-circle"
+        [label]="'invoices.errorsLink' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="goErrors()"
+      />
+      @if (auth.isAdmin()) {
+        <p-button
+          icon="pi pi-file-excel"
+          [label]="'invoices.export' | translate"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="isExporting()"
+          [disabled]="isExporting()"
+          (onClick)="export()"
+        />
+      }
+      @if (auth.canWrite()) {
+        <p-button
+          icon="pi pi-cog"
+          [label]="'invoices.generate' | translate"
+          [loading]="isRunning()"
+          [disabled]="isRunning()"
+          (onClick)="runBatch()"
+        />
+      }
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <p-iconfield class="grow">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="search"
+        fluid
+        [placeholder]="'invoices.searchPlaceholder' | translate"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </p-iconfield>
+    <p-select
+      class="status-filter"
+      [options]="statusOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="onStatusChange($event)"
+      [ariaLabel]="'fields.status' | translate"
+    />
+  </div>
+
+  <p-table
+    [value]="items()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="rows()"
+    [first]="first()"
+    [totalRecords]="total()"
+    [loading]="isLoading() || isRunning()"
+    [rowsPerPageOptions]="[10, 25]"
+    [rowHover]="true"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>{{ 'invoices.number' | translate }}</th>
+        <th>{{ 'fields.client' | translate }}</th>
+        <th>{{ 'fields.vehicle' | translate }}</th>
+        <th>{{ 'invoices.appointmentDate' | translate }}</th>
+        <th class="amount">{{ 'quote.total' | translate }}</th>
+        <th>{{ 'fields.status' | translate }}</th>
+        <th>{{ 'common.action' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-invoice>
+      <tr class="row-clickable p-selectable-row" (click)="open(invoice)">
+        <td>{{ invoice.number }}</td>
+        <td>{{ invoice.clientName }}</td>
+        <td>{{ invoice.vehicleLabel }}</td>
+        <td>{{ invoice.appointmentDate | date: settings.dateFormat().angular }}</td>
+        <td class="amount">{{ money(invoice.total) }}</td>
+        <td>
+          <p-tag
+            [value]="'invoices.status.' + invoice.status | translate"
+            [severity]="severity(invoice.status)"
+          />
+        </td>
+        <td>
+          <p-button
+            [label]="'common.detail' | translate"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="$event.stopPropagation(); open(invoice)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="7">
+          @if (hasFilter()) {
+            {{ 'invoices.emptyFiltered' | translate }}
+          } @else {
+            <div class="empty-box">
+              <i class="pi pi-receipt" style="font-size: 2rem"></i>
+              <p>{{ 'invoices.empty' | translate }}</p>
+              @if (auth.canWrite()) {
+                <p-button
+                  icon="pi pi-cog"
+                  [label]="'invoices.generate' | translate"
+                  [loading]="isRunning()"
+                  [disabled]="isRunning()"
+                  (onClick)="runBatch()"
+                />
+              }
+            </div>
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-dialog
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [dismissableMask]="!isSaving()"
+  [closeOnEscape]="!isSaving()"
+  [style]="{ width: '40rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <span class="dialog-title">{{ 'invoices.detailTitle' | translate: { number: selected()?.number } }}</span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        [disabled]="isSaving()"
+        (onClick)="dialogOpen.set(false)"
+      />
+    </div>
+  </ng-template>
+
+  @if (selected(); as invoice) {
+    @if (mode() === 'view') {
+      <dl class="fact-sheet">
+        <dt>{{ 'fields.client' | translate }}</dt>
+        <dd>{{ invoice.clientName }}</dd>
+        <dt>{{ 'fields.vehicle' | translate }}</dt>
+        <dd>{{ invoice.vehicleLabel }}</dd>
+        <dt>{{ 'invoices.appointmentDate' | translate }}</dt>
+        <dd>{{ invoice.appointmentDate | date: settings.dateFormat().angular }}</dd>
+        <dt>{{ 'invoices.issuedAt' | translate }}</dt>
+        <dd>{{ invoice.issuedAt | date: settings.dateFormat().angular }}</dd>
+        @if (invoice.paidAt) {
+          <dt>{{ 'invoices.paidAt' | translate }}</dt>
+          <dd>{{ invoice.paidAt | date: settings.dateFormat().angular }}</dd>
+        }
+        <dt>{{ 'fields.status' | translate }}</dt>
+        <dd>
+          <p-tag
+            [value]="'invoices.status.' + invoice.status | translate"
+            [severity]="severity(invoice.status)"
+          />
+        </dd>
+      </dl>
+
+      <table class="lines-table">
+        <thead>
+          <tr>
+            <th>{{ 'quote.description' | translate }}</th>
+            <th class="num">{{ 'quote.quantity' | translate }}</th>
+            <th class="num">{{ 'quote.unitPrice' | translate }}</th>
+            <th class="num">{{ 'quote.lineTotal' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of invoice.lines; track $index) {
+            <tr>
+              <td>{{ line.description }}</td>
+              <td class="num">{{ line.quantity }}</td>
+              <td class="num">{{ money(line.unitPrice) }}</td>
+              <td class="num">{{ money(line.total) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      @if (isDetailLoading()) {
+        <p class="muted">{{ 'common.loading' | translate }}</p>
+      }
+
+      <div class="total-row">
+        <span>{{ 'quote.total' | translate }}</span>
+        <span>{{ money(invoice.total) }}</span>
+      </div>
+
+      <div class="dialog-actions">
+        @if (invoice.status === 'ISSUED' && auth.canWrite()) {
+          <p-button
+            icon="pi pi-check"
+            [label]="'invoices.markPaid' | translate"
+            [disabled]="isDetailLoading()"
+            (onClick)="startPay()"
+          />
+        }
+        <p-button
+          icon="pi pi-file-pdf"
+          [label]="'invoices.downloadPdf' | translate"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="isDownloading()"
+          [disabled]="isDownloading() || isDetailLoading()"
+          (onClick)="downloadPdf()"
+        />
+        <p-button
+          [label]="'common.close' | translate"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="dialogOpen.set(false)"
+        />
+      </div>
+    } @else {
+      <div class="confirm-view">
+        <i class="pi pi-exclamation-triangle confirm-icon"></i>
+        <p>{{ 'invoices.confirmPay' | translate: { number: invoice.number } }}</p>
+        <div class="dialog-actions">
+          <p-button
+            [label]="'common.confirm' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+            (onClick)="pay()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="backToView()"
+          />
+        </div>
+      </div>
+    }
+  }
+</p-dialog>
+
+<p-dialog
+  [(visible)]="resultOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [style]="{ width: '30rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <span class="dialog-title">{{ 'invoices.resultTitle' | translate }}</span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        (onClick)="resultOpen.set(false)"
+      />
+    </div>
+  </ng-template>
+
+  @if (runResult(); as run) {
+    <div class="result-status">
+      <p-tag [value]="'invoices.runStatus.' + run.status | translate" [severity]="runSeverity(run.status)" />
+    </div>
+    <div class="result-grid">
+      <div class="result-item">
+        <span>{{ 'invoices.read' | translate }}</span>
+        <strong>{{ run.readCount }}</strong>
+      </div>
+      <div class="result-item">
+        <span>{{ 'invoices.created' | translate }}</span>
+        <strong>{{ run.writeCount }}</strong>
+      </div>
+      <div class="result-item">
+        <span>{{ 'invoices.skipped' | translate }}</span>
+        <strong>{{ run.skipCount }}</strong>
+      </div>
+      <div class="result-item">
+        <span>{{ 'invoices.errors' | translate }}</span>
+        <strong>{{ run.errorCount }}</strong>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      @if (run.errorCount > 0) {
+        <p-button
+          icon="pi pi-exclamation-circle"
+          [label]="'invoices.seeErrors' | translate"
+          (onClick)="openErrors()"
+        />
+      }
+      <p-button
+        [label]="'common.close' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="resultOpen.set(false)"
+      />
+    </div>
+  }
+</p-dialog>

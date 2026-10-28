@@ -50,7 +50,7 @@
         <td>
           <p-tag
             [value]="(client.active ? 'clients.active' : 'clients.inactive') | translate"
-            [severity]="client.active ? 'success' : 'secondary'"
+            [severity]="client.active ? 'success' : 'danger'"
           />
         </td>
         <td>
@@ -72,32 +72,21 @@
   </p-table>
 </section>
 
-<p-drawer
-  [(visible)]="drawerOpen"
-  position="right"
+<p-dialog
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
   [closable]="false"
-  [dismissible]="false"
-  [closeOnEscape]="false"
-  [style]="{ width: 'min(30rem, 100vw)' }"
+  [dismissableMask]="!hasUnsavedChanges()"
+  [closeOnEscape]="!hasUnsavedChanges()"
+  [style]="{ width: '36rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
 >
   <ng-template #header>
-    <div class="drawer-header">
-      <span class="drawer-title">
-        @switch (mode()) {
-          @case ('create') {
-            {{ 'clients.new' | translate }}
-          }
-          @case ('edit') {
-            {{ 'common.edit' | translate }}
-          }
-          @case ('addVehicle') {
-            {{ 'clients.addVehicle' | translate }}
-          }
-          @default {
-            {{ selectedName() }}
-          }
-        }
-      </span>
+    <div class="dialog-header">
+      <span class="dialog-title">{{ 'clients.new' | translate }}</span>
       <p-button
         icon="pi pi-times"
         [rounded]="true"
@@ -109,181 +98,49 @@
     </div>
   </ng-template>
 
-  @switch (mode()) {
-    @case ('view') {
-      @if (selected(); as client) {
-        <dl class="fact-sheet">
-          <dt>{{ 'fields.lastName' | translate }}</dt>
-          <dd>{{ client.lastName }}</dd>
-          <dt>{{ 'fields.firstName' | translate }}</dt>
-          <dd>{{ client.firstName }}</dd>
-          <dt>{{ 'fields.email' | translate }}</dt>
-          <dd>{{ client.email }}</dd>
-          <dt>{{ 'fields.phone' | translate }}</dt>
-          <dd>{{ client.phone }}</dd>
-          <dt>{{ 'fields.status' | translate }}</dt>
-          <dd>{{ (client.active ? 'clients.active' : 'clients.inactive') | translate }}</dd>
-        </dl>
-
-        <h2 class="section-title">{{ 'clients.vehicles' | translate }}</h2>
-        @if (vehicles().length) {
-          <ul class="vehicle-list">
-            @for (vehicle of vehicles(); track vehicle.id) {
-              <li>{{ vehicle.brand }} {{ vehicle.model }}, {{ vehicle.plate }}</li>
-            }
-          </ul>
-        } @else {
-          <p class="muted">{{ 'clients.noVehicle' | translate }}</p>
-        }
-
-        <div class="drawer-actions">
-          @if (auth.canWrite()) {
-            <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
-            <p-button
-              icon="pi pi-car"
-              [label]="'clients.addVehicle' | translate"
-              severity="secondary"
-              [outlined]="true"
-              (onClick)="startAddVehicle()"
-            />
-          }
-          @if (auth.isAdmin()) {
-            <p-button
-              [icon]="client.active ? 'pi pi-ban' : 'pi pi-replay'"
-              [label]="(client.active ? 'clients.deactivate' : 'clients.activate') | translate"
-              [severity]="client.active ? 'danger' : 'secondary'"
-              [outlined]="true"
-              (onClick)="startConfirm()"
-            />
-          }
-        </div>
+  <form class="dialog-form" [formGroup]="clientForm" (ngSubmit)="saveClient()" novalidate>
+    <div class="field">
+      <label for="lastName">{{ 'fields.lastName' | translate }}</label>
+      <input pInputText id="lastName" formControlName="lastName" fluid />
+      @if (clientForm.controls.lastName.touched && clientForm.controls.lastName.errors) {
+        <small class="field-error">{{ 'validation.required' | translate }}</small>
       }
+    </div>
+    <div class="field">
+      <label for="firstName">{{ 'fields.firstName' | translate }}</label>
+      <input pInputText id="firstName" formControlName="firstName" fluid />
+      @if (clientForm.controls.firstName.touched && clientForm.controls.firstName.errors) {
+        <small class="field-error">{{ 'validation.required' | translate }}</small>
+      }
+    </div>
+    <div class="field">
+      <label for="email">{{ 'fields.email' | translate }}</label>
+      <input pInputText id="email" type="email" formControlName="email" fluid />
+      @if (clientForm.controls.email.touched && clientForm.controls.email.errors) {
+        <small class="field-error">
+          {{ (clientForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
+        </small>
+      }
+    </div>
+    <div class="field">
+      <label for="phone">{{ 'fields.phone' | translate }}</label>
+      <input pInputText id="phone" formControlName="phone" fluid />
+      @if (clientForm.controls.phone.touched && clientForm.controls.phone.errors) {
+        <small class="field-error">{{ 'validation.phone' | translate }}</small>
+      }
+    </div>
+    <div class="dialog-actions">
+      <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+      <p-button
+        [label]="'common.cancel' | translate"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="isSaving()"
+        (onClick)="requestClose()"
+      />
+    </div>
+    @if (formError(); as message) {
+      <p-message severity="error">{{ message }}</p-message>
     }
-
-    @case ('confirm') {
-      <div class="confirm-view">
-        <i class="pi pi-exclamation-triangle confirm-icon"></i>
-        <p>
-          {{
-            (selected()?.active ? 'clients.confirmDeactivate' : 'clients.confirmActivate')
-              | translate: { name: selectedName() }
-          }}
-        </p>
-        <div class="drawer-actions">
-          <p-button
-            [label]="'common.confirm' | translate"
-            [loading]="isSaving()"
-            [disabled]="isSaving()"
-            (onClick)="confirmToggleActive()"
-          />
-          <p-button
-            [label]="'common.cancel' | translate"
-            severity="secondary"
-            [outlined]="true"
-            [disabled]="isSaving()"
-            (onClick)="mode.set('view')"
-          />
-        </div>
-      </div>
-    }
-
-    @case ('addVehicle') {
-      <form class="drawer-form" [formGroup]="vehicleForm" (ngSubmit)="saveVehicle()" novalidate>
-        <div class="field">
-          <label for="plate">{{ 'fields.plate' | translate }}</label>
-          <input pInputText id="plate" formControlName="plate" fluid />
-          @if (vehicleForm.controls.plate.touched && vehicleForm.controls.plate.errors) {
-            <small class="field-error">{{ 'validation.required' | translate }}</small>
-          }
-        </div>
-        <div class="field">
-          <label for="brand">{{ 'fields.brand' | translate }}</label>
-          <input pInputText id="brand" formControlName="brand" fluid />
-          @if (vehicleForm.controls.brand.touched && vehicleForm.controls.brand.errors) {
-            <small class="field-error">{{ 'validation.required' | translate }}</small>
-          }
-        </div>
-        <div class="field">
-          <label for="model">{{ 'fields.model' | translate }}</label>
-          <input pInputText id="model" formControlName="model" fluid />
-          @if (vehicleForm.controls.model.touched && vehicleForm.controls.model.errors) {
-            <small class="field-error">{{ 'validation.required' | translate }}</small>
-          }
-        </div>
-
-        <div class="drawer-actions">
-          <p-button
-            type="submit"
-            [label]="'common.save' | translate"
-            [loading]="isSaving()"
-            [disabled]="isSaving()"
-          />
-          <p-button
-            [label]="'common.cancel' | translate"
-            severity="secondary"
-            [outlined]="true"
-            [disabled]="isSaving()"
-            (onClick)="cancelForm()"
-          />
-        </div>
-        @if (formError(); as message) {
-          <p-message severity="error">{{ message }}</p-message>
-        }
-      </form>
-    }
-
-    @default {
-      <form class="drawer-form" [formGroup]="clientForm" (ngSubmit)="saveClient()" novalidate>
-        <div class="field">
-          <label for="lastName">{{ 'fields.lastName' | translate }}</label>
-          <input pInputText id="lastName" formControlName="lastName" fluid />
-          @if (clientForm.controls.lastName.touched && clientForm.controls.lastName.errors) {
-            <small class="field-error">{{ 'validation.required' | translate }}</small>
-          }
-        </div>
-        <div class="field">
-          <label for="firstName">{{ 'fields.firstName' | translate }}</label>
-          <input pInputText id="firstName" formControlName="firstName" fluid />
-          @if (clientForm.controls.firstName.touched && clientForm.controls.firstName.errors) {
-            <small class="field-error">{{ 'validation.required' | translate }}</small>
-          }
-        </div>
-        <div class="field">
-          <label for="email">{{ 'fields.email' | translate }}</label>
-          <input pInputText id="email" type="email" formControlName="email" fluid />
-          @if (clientForm.controls.email.touched && clientForm.controls.email.errors) {
-            <small class="field-error">
-              {{ (clientForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
-            </small>
-          }
-        </div>
-        <div class="field">
-          <label for="phone">{{ 'fields.phone' | translate }}</label>
-          <input pInputText id="phone" formControlName="phone" fluid />
-          @if (clientForm.controls.phone.touched && clientForm.controls.phone.errors) {
-            <small class="field-error">{{ 'validation.phone' | translate }}</small>
-          }
-        </div>
-
-        <div class="drawer-actions">
-          <p-button
-            type="submit"
-            [label]="'common.save' | translate"
-            [loading]="isSaving()"
-            [disabled]="isSaving()"
-          />
-          <p-button
-            [label]="'common.cancel' | translate"
-            severity="secondary"
-            [outlined]="true"
-            [disabled]="isSaving()"
-            (onClick)="cancelForm()"
-          />
-        </div>
-        @if (formError(); as message) {
-          <p-message severity="error">{{ message }}</p-message>
-        }
-      </form>
-    }
-  }
-</p-drawer>
+  </form>
+</p-dialog>

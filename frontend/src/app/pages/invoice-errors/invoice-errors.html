@@ -1,0 +1,119 @@
+<section class="page">
+  <div class="header-row">
+    <h1 class="page-title">{{ 'invoices.errorsTitle' | translate }}</h1>
+    <p-button
+      icon="pi pi-arrow-left"
+      [label]="'invoices.backToInvoices' | translate"
+      severity="secondary"
+      [outlined]="true"
+      (onClick)="backToInvoices()"
+    />
+  </div>
+
+  <h2 class="section-title">{{ 'invoices.lastRuns' | translate }}</h2>
+  <p-table [value]="runs()" [loading]="runsLoading()" [rowHover]="true" dataKey="id">
+    <ng-template #header>
+      <tr>
+        <th>{{ 'fields.date' | translate }}</th>
+        <th>{{ 'fields.status' | translate }}</th>
+        <th class="num">{{ 'invoices.read' | translate }}</th>
+        <th class="num">{{ 'invoices.created' | translate }}</th>
+        <th class="num">{{ 'invoices.skipped' | translate }}</th>
+        <th class="num">{{ 'invoices.errors' | translate }}</th>
+        <th>{{ 'invoices.duration' | translate }}</th>
+        <th>{{ 'common.action' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-run>
+      <tr class="row-clickable p-selectable-row" (click)="onRunChange(run.id)">
+        <td>{{ run.startTime | date: settings.dateFormat().angular + ' HH:mm' }}</td>
+        <td>
+          <p-tag [value]="'invoices.runStatus.' + run.status | translate" [severity]="runSeverity(run.status)" />
+        </td>
+        <td class="num">{{ run.readCount }}</td>
+        <td class="num">{{ run.writeCount }}</td>
+        <td class="num">{{ run.skipCount }}</td>
+        <td class="num">{{ run.errorCount }}</td>
+        <td>{{ duration(run) }}</td>
+        <td>
+          <p-button
+            [label]="'common.detail' | translate"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="$event.stopPropagation(); onRunChange(run.id)"
+          />
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="8">{{ 'invoices.noRun' | translate }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <div class="header-row">
+    <h2 class="section-title">{{ 'invoices.errorsList' | translate }}</h2>
+    <p-select
+      class="run-filter"
+      [options]="runOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="runFilter()"
+      (ngModelChange)="onRunChange($event)"
+      [ariaLabel]="'invoices.runFilter' | translate"
+    />
+  </div>
+
+  <p-table
+    [value]="items()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="rows()"
+    [first]="first()"
+    [totalRecords]="total()"
+    [loading]="isLoading()"
+    [rowsPerPageOptions]="[10, 25]"
+    [rowHover]="true"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>{{ 'fields.date' | translate }}</th>
+        <th>{{ 'invoices.errorCode' | translate }}</th>
+        <th>{{ 'invoices.message' | translate }}</th>
+        <th>{{ 'invoices.appointment' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-error>
+      <tr>
+        <td class="nowrap">{{ error.occurredAt | date: settings.dateFormat().angular + ' HH:mm' }}</td>
+        <td>
+          @if (isKnown(error.code)) {
+            <strong>{{ 'invoices.errorCodes.' + error.code + '.label' | translate }}</strong>
+            <div class="help">{{ 'invoices.errorCodes.' + error.code + '.help' | translate }}</div>
+          } @else {
+            <strong>{{ error.code }}</strong>
+          }
+        </td>
+        <td class="message">{{ error.message }}</td>
+        <td>
+          @if (error.appointmentId) {
+            <a [routerLink]="['/appointments']" [queryParams]="{ open: error.appointmentId }">
+              {{ error.appointmentLabel || ('invoices.openAppointment' | translate) }}
+            </a>
+          } @else {
+            <span class="muted">{{ 'invoices.noAppointment' | translate }}</span>
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4">{{ 'invoices.noError' | translate }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>

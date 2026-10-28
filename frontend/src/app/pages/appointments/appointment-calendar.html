@@ -1,0 +1,242 @@
+<div class="cal">
+  <div class="cal-toolbar">
+    <div class="cal-nav">
+      <p-button
+        icon="pi pi-chevron-left"
+        severity="secondary"
+        [outlined]="true"
+        [ariaLabel]="'calendar.previous' | translate"
+        (onClick)="previous()"
+      />
+      <p-button [label]="'calendar.today' | translate" severity="secondary" [outlined]="true" (onClick)="today()" />
+      <p-button
+        icon="pi pi-chevron-right"
+        severity="secondary"
+        [outlined]="true"
+        [ariaLabel]="'calendar.next' | translate"
+        (onClick)="next()"
+      />
+    </div>
+
+    <h2 class="cal-title">
+      @switch (view()) {
+        @case ('month') {
+          {{ title().month }}
+        }
+        @case ('week') {
+          {{ 'calendar.weekRange' | translate: { from: title().from, to: title().to } }}
+        }
+        @default {
+          {{ title().day }}
+        }
+      }
+    </h2>
+
+    <p-selectbutton
+      [options]="viewOptions"
+      optionValue="value"
+      [allowEmpty]="false"
+      [ngModel]="view()"
+      (ngModelChange)="onViewChange($event)"
+      [ariaLabel]="'calendar.view' | translate"
+    >
+      <ng-template #item let-option>{{ option.label | translate }}</ng-template>
+    </p-selectbutton>
+  </div>
+
+  <div class="cal-legend">
+    @for (s of ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']; track s) {
+      <span class="cal-legend-item" [attr.data-status]="s">
+        <span class="cal-dot"></span>{{ 'status.' + s | translate }}
+      </span>
+    }
+    @if (editable()) {
+      <span class="cal-hint"><i class="pi pi-arrows-alt" aria-hidden="true"></i>{{ 'calendar.dragHint' | translate }}</span>
+    }
+  </div>
+
+  @if (liveEvents().length) {
+    <div class="cal-banner" data-status="IN_PROGRESS" role="status">
+      <span class="cal-pulse" aria-hidden="true"></span>
+      <span>{{ 'calendar.workingOn' | translate: { vehicle: liveVehicles() } }}</span>
+    </div>
+  }
+
+  <div class="cal-body" [class.is-loading]="loading()" [class.is-dragging]="drag()?.active">
+    @if (view() === 'month') {
+      <div class="cal-month">
+        @for (name of weekdays(); track $index) {
+          <div class="cal-weekday">{{ name }}</div>
+        }
+        @for (cell of monthCells(); track cell.key) {
+          <div
+            class="cal-cell"
+            [class.is-outside]="!cell.inMonth"
+            [class.is-today]="cell.isToday"
+            [class.is-drop]="dropDay() === cell.ts"
+            [attr.data-drop]="cell.ts"
+            role="button"
+            tabindex="0"
+            [attr.aria-label]="cell.date | date: 'fullDate'"
+            (click)="onDayClick(cell.date)"
+            (keydown.enter)="onDayClick(cell.date)"
+          >
+            <span class="cal-daynum">{{ cell.date.getDate() }}</span>
+            @for (e of cell.events.slice(0, maxChips); track e.id) {
+              <button
+                type="button"
+                class="cal-chip"
+                [class.is-draggable]="canDrag(e)"
+                [class.is-dragging]="draggedId() === e.id"
+                [class.is-flash]="flashId() === e.id"
+                [attr.data-status]="e.status"
+                [title]="eventTooltip(e)"
+                (click)="onEventClick(e, $event)"
+                (pointerdown)="onPointerDown($event, e, 'month')"
+              >
+                <span class="cal-chip-time">{{ e.start | date: 'HH:mm' }}</span>
+                <span class="cal-chip-text">{{ e.clientName }}</span>
+              </button>
+            }
+            @if (cell.events.length > maxChips) {
+              <button type="button" class="cal-more" (click)="showWeekOf(cell.date, $event)">
+                {{ 'calendar.more' | translate: { count: cell.events.length - maxChips } }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div
+        class="cal-week"
+        [class.is-day]="view() === 'day'"
+        [style.--hour-height]="hourPx() + 'px'"
+        [style.--cols]="columns().length"
+      >
+        <div class="cal-week-scroll" #scroller>
+          <div class="cal-week-head">
+            <div class="cal-gutter"></div>
+            @for (col of columns(); track col.ts) {
+              @if (view() === 'week') {
+                <button
+                  type="button"
+                  class="cal-week-day"
+                  [class.is-today]="col.isToday"
+                  [attr.aria-label]="'calendar.openDay' | translate: { date: col.label }"
+                  (click)="showDayOf(col.date)"
+                >
+                  <span>{{ col.weekday }}</span>
+                  <span class="cal-daynum">{{ col.date.getDate() }}</span>
+                </button>
+              } @else {
+                <div class="cal-week-day" [class.is-today]="col.isToday">
+                  <span>{{ col.weekday }}</span>
+                  <span class="cal-daynum">{{ col.date.getDate() }}</span>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="cal-week-grid">
+            <div class="cal-gutter">
+              @for (label of hourLabels; track label) {
+                <div class="cal-hour-label">{{ label }}</div>
+              }
+            </div>
+            @for (col of columns(); track col.ts; let ci = $index) {
+              <div class="cal-week-col" [class.is-today]="col.isToday" [attr.data-drop]="col.ts">
+                @for (p of col.events; track p.event.id) {
+                  <button
+                    type="button"
+                    class="cal-block"
+                    [class.is-draggable]="canDrag(p.event)"
+                    [class.is-dragging]="draggedId() === p.event.id"
+                    [class.is-flash]="flashId() === p.event.id"
+                    [class.is-compact]="p.compact"
+                    [class.is-live]="p.event.status === 'IN_PROGRESS'"
+                    [attr.data-status]="p.event.status"
+                    [title]="eventTooltip(p.event)"
+                    [style.top.px]="p.top"
+                    [style.height.px]="p.height"
+                    [style.left.%]="p.left"
+                    [style.width.%]="p.width"
+                    (click)="onEventClick(p.event, $event)"
+                    (pointerdown)="onPointerDown($event, p.event, 'grid')"
+                  >
+                    @if (view() === 'day') {
+                      <span class="cal-block-head">
+                        <strong>{{ 'calendar.timeRange' | translate: { from: p.from, to: p.to } }}</strong>
+                        <p-tag
+                          [value]="'status.' + p.event.status | translate"
+                          [severity]="severity(p.event.status)"
+                        />
+                        @if (p.event.status === 'IN_PROGRESS') {
+                          <span class="cal-live">
+                            <span class="cal-pulse" aria-hidden="true"></span>{{ 'calendar.live' | translate }}
+                            {{ progress(p.event) }} %
+                          </span>
+                        }
+                      </span>
+                      <span class="cal-block-client">{{ p.event.clientName }}</span>
+                      <span class="cal-block-sub">{{ p.event.vehicleLabel }}</span>
+                      <span class="cal-block-sub">{{ p.event.title }}</span>
+                    } @else {
+                      <strong>{{ p.from }}</strong>
+                      <span>{{ p.event.clientName }}</span>
+                      <span class="cal-block-sub">{{ p.event.vehicleLabel }}</span>
+                    }
+                    @if (p.event.status === 'IN_PROGRESS') {
+                      <span
+                        class="cal-progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="progress(p.event)"
+                        [attr.aria-label]="'calendar.live' | translate"
+                      >
+                        <span class="cal-progress-bar" [style.width.%]="progress(p.event)"></span>
+                      </span>
+                    }
+                  </button>
+                }
+
+                @for (h of hours; track h) {
+                  <div
+                    class="cal-slot"
+                    role="button"
+                    tabindex="0"
+                    [attr.data-slot]="ci + '-' + h"
+                    [attr.aria-label]="col.label + ', ' + hourLabels[h]"
+                    (click)="onSlotClick(col.date, h, $event)"
+                    (keydown)="onSlotKey($event, ci, h, col.date)"
+                  ></div>
+                }
+
+                @if (col.isToday) {
+                  <div class="cal-now" aria-hidden="true" [style.top.px]="nowTop()"></div>
+                }
+
+                @if (dropPreview(); as pv) {
+                  @if (pv.dayTs === col.ts) {
+                    <div class="cal-preview" aria-hidden="true" [style.top.px]="pv.top" [style.height.px]="pv.height">
+                      {{ 'calendar.timeRange' | translate: { from: pv.from, to: pv.to } }}
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (ghost(); as g) {
+  <div class="cal-ghost" aria-hidden="true" [style.left.px]="g.x" [style.top.px]="g.y">
+    <strong>{{ g.name }}</strong>
+    @if (g.when) {
+      <span>{{ g.when }}</span>
+    }
+  </div>
+}

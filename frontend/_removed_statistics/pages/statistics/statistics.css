@@ -1,0 +1,36 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+
+.kpi-label {
+  color: var(--p-text-muted-color);
+}
+
+.kpi-value {
+  margin-top: 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1rem;
+}
+
+.chart-card.wide {
+  grid-column: 1 / -1;
+}
+
+.chart-title {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Pendant le chargement, les graphiques restent visibles mais atténués. */
+.chart-grid.is-loading {
+  opacity: 0.5;
+}

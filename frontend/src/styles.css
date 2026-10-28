@@ -1,17 +1,42 @@
 @import 'primeicons/primeicons.css';
 
+:root {
+  /* Fond de page légèrement teinté pour sortir du tout blanc ; les cartes restent blanches. */
+  --app-bg: color-mix(in srgb, var(--p-primary-500) 5%, var(--p-surface-100));
+  --app-shadow: 0 1px 3px rgb(15 23 42 / 0.08), 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+html {
+  font-size: 16px;
+}
+
+/* Grands écrans : base un peu plus grande pour rester lisible. */
+@media (min-width: 1600px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 2200px) {
+  html {
+    font-size: 18px;
+  }
+}
+
 html,
 body {
   margin: 0;
   min-height: 100%;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 1rem;
-  background: var(--p-surface-50);
+  line-height: 1.5;
+  background: var(--app-bg);
   color: var(--p-text-color);
 }
 
-html.app-dark body {
-  background: var(--p-surface-950);
+html.app-dark {
+  --app-bg: var(--p-surface-950);
+  --app-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
 }
 
 /* Lignes de table cliquables : le survol utilise les couleurs du thème (fond ET texte définis ensemble). */
@@ -19,18 +44,54 @@ html.app-dark body {
   cursor: pointer;
 }
 
+/* Carte blanche à ombre légère. */
+.card {
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+  box-shadow: var(--app-shadow);
+  padding: 1.25rem;
+}
+
+/* Les tableaux de page sont des cartes. */
+.page .p-datatable {
+  background: var(--p-content-background);
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius);
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
 /* Page standard : titre, barre d'outils, contenu. */
 .page {
-  padding: 1.5rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 2rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
+}
+
+.page-wide {
+  max-width: 105rem;
+}
+
+/* Page dont le contenu est une carte centrée (Paramètres). */
+.page-centered {
+  align-items: center;
+}
+
+.page-centered .page-title {
+  text-align: center;
 }
 
 .page-title {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .toolbar {
@@ -44,9 +105,21 @@ html.app-dark body {
   flex: 1 1 16rem;
 }
 
-/* Tiroir : fiche de lecture, formulaire et confirmation. */
-.drawer-title {
-  font-size: 1.125rem;
+/* Fenêtre de dialogue : fiche de lecture, formulaire et confirmation. */
+.app-dialog .p-dialog-content {
+  padding-top: 0.5rem;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.dialog-title {
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
@@ -66,7 +139,7 @@ html.app-dark body {
   overflow-wrap: anywhere;
 }
 
-.drawer-form {
+.dialog-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -91,11 +164,12 @@ html.app-dark .field-error {
   color: var(--p-red-400);
 }
 
-.drawer-actions {
+.dialog-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .confirm-view {
@@ -104,8 +178,8 @@ html.app-dark .field-error {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 1.5rem;
-  min-height: 60vh;
+  gap: 1rem;
+  padding: 1rem 0;
 }
 
 /* Pages d'accès : carte centrée. */
@@ -122,7 +196,15 @@ html.app-dark .field-error {
   max-width: 26rem;
 }
 
+.auth-logo {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 0.75rem;
+}
+
 .auth-title {
+  text-align: center;
   margin: 0 0 1rem;
   font-size: 1.5rem;
   font-weight: 600;

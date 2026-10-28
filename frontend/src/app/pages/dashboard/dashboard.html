@@ -1,0 +1,96 @@
+<section class="page">
+  <h1 class="page-title">{{ 'dashboard.title' | translate }}</h1>
+
+  @if (pending() > 0) {
+    <p-message severity="info" icon="pi pi-receipt">
+      <div class="alert-row">
+        <span>{{ 'dashboard.pendingInvoices' | translate: { count: pending() } }}</span>
+        <p-button
+          size="small"
+          [label]="'dashboard.goInvoices' | translate"
+          (onClick)="goInvoices()"
+        />
+      </div>
+    </p-message>
+  }
+
+  <div class="stat-grid">
+    <p-card>
+      <div class="stat-label">{{ 'dashboard.monthRevenue' | translate }}</div>
+      <div class="stat-value">{{ monthRevenue() }}</div>
+    </p-card>
+    <p-card>
+      <div class="stat-label">{{ 'dashboard.unpaidInvoices' | translate }}</div>
+      <div class="stat-value">{{ unpaidCount() }}</div>
+      <div class="stat-sub">{{ unpaidAmount() }}</div>
+      <p-button
+        class="stat-link"
+        [label]="'dashboard.seeUnpaid' | translate"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="goInvoices('ISSUED')"
+      />
+    </p-card>
+    @for (card of cards(); track card.key) {
+      <p-card>
+        <div class="stat-label">{{ card.key | translate }}</div>
+        <div class="stat-value">{{ card.value }}</div>
+      </p-card>
+    }
+  </div>
+
+  <div class="blocks">
+    <section class="block">
+      <h2 class="section-title">{{ 'dashboard.todayBlock' | translate }}</h2>
+      @for (a of todayList(); track a.id) {
+        <button type="button" class="row" (click)="openAppointment(a.id)">
+          <span class="time">{{ a.start | date: 'HH:mm' }}</span>
+          <span class="who">
+            <strong>{{ a.clientName }}</strong>
+            <small>{{ a.vehicleLabel }}</small>
+          </span>
+          <p-tag [value]="'status.' + a.status | translate" [severity]="statusSeverity(a.status)" />
+        </button>
+      } @empty {
+        <p class="empty">{{ isLoading() ? ('common.loading' | translate) : ('dashboard.empty' | translate) }}</p>
+      }
+    </section>
+
+    <section class="block">
+      <h2 class="section-title">{{ 'dashboard.inProgressBlock' | translate }}</h2>
+      @for (a of inProgressList(); track a.id) {
+        <button type="button" class="row row-progress" (click)="openAppointment(a.id)">
+          <span class="time">{{ a.start | date: 'HH:mm' }}</span>
+          <span class="who">
+            <strong>{{ a.clientName }}</strong>
+            <small>{{ a.vehicleLabel }}</small>
+            <p-progressbar [value]="progress(a)" [showValue]="false" styleClass="bar" />
+          </span>
+          <span class="percent">{{ progress(a) }} %</span>
+        </button>
+      } @empty {
+        <p class="empty">{{ isLoading() ? ('common.loading' | translate) : ('dashboard.noneInProgress' | translate) }}</p>
+      }
+    </section>
+
+    <section class="block">
+      <h2 class="section-title">{{ 'dashboard.upcomingBlock' | translate }}</h2>
+      @for (a of upcomingList(); track a.id) {
+        <button type="button" class="row" (click)="openAppointment(a.id)">
+          <span class="time">
+            {{ a.start | date: settings.dateFormat().angular }}
+            <small>{{ a.start | date: 'HH:mm' }}</small>
+          </span>
+          <span class="who">
+            <strong>{{ a.clientName }}</strong>
+            <small>{{ a.vehicleLabel }}</small>
+          </span>
+          <p-tag [value]="'status.' + a.status | translate" [severity]="statusSeverity(a.status)" />
+        </button>
+      } @empty {
+        <p class="empty">{{ isLoading() ? ('common.loading' | translate) : ('dashboard.noUpcoming' | translate) }}</p>
+      }
+    </section>
+  </div>
+</section>

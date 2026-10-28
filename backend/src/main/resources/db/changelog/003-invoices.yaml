@@ -1,0 +1,87 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-invoice-number-sequence
+      author: garage
+      changes:
+        # One global counter: FAC-AAAA-000001 uses the year of issue and this sequence (no yearly reset).
+        - createSequence:
+            sequenceName: invoice_number_seq
+            startValue: 1
+            incrementBy: 1
+
+  - changeSet:
+      id: 010-invoices
+      author: garage
+      changes:
+        - createTable:
+            tableName: invoices
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: number, type: varchar(20), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_invoices_number } }
+              # UNIQUE and NOT NULL: one appointment can never have two invoices.
+              - column: { name: appointment_id, type: uuid, constraints: { nullable: false, unique: true, uniqueConstraintName: uq_invoices_appointment, foreignKeyName: fk_invoices_appointment, references: appointments(id) } }
+              - column: { name: client_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_invoices_client, references: clients(id) } }
+              - column: { name: total, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: status, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: issued_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: paid_at, type: timestamptz }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: invoices
+            indexName: idx_invoices_client
+            columns:
+              - column: { name: client_id }
+        - createIndex:
+            tableName: invoices
+            indexName: idx_invoices_status
+            columns:
+              - column: { name: status }
+
+  - changeSet:
+      id: 011-invoice-lines
+      author: garage
+      changes:
+        - createTable:
+            tableName: invoice_lines
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: invoice_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_invoice_lines_invoice, references: invoices(id) } }
+              - column: { name: sort_order, type: integer, constraints: { nullable: false } }
+              - column: { name: description, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: quantity, type: "numeric(10,2)", constraints: { nullable: false } }
+              - column: { name: unit_price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: total, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: invoice_lines
+            indexName: idx_invoice_lines_invoice
+            columns:
+              - column: { name: invoice_id }
+
+  - changeSet:
+      id: 012-batch-errors
+      author: garage
+      changes:
+        # run_id is the Spring Batch job execution id (BATCH_JOB_EXECUTION is created by Spring Batch, no foreign key).
+        # appointment_id has no foreign key either: an error row must always be writable.
+        - createTable:
+            tableName: batch_errors
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: run_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: appointment_id, type: uuid }
+              - column: { name: code, type: varchar(30), constraints: { nullable: false } }
+              - column: { name: message, type: varchar(500), constraints: { nullable: false } }
+              - column: { name: occurred_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: batch_errors
+            indexName: idx_batch_errors_run
+            columns:
+              - column: { name: run_id }
+        - createIndex:
+            tableName: batch_errors
+            indexName: idx_batch_errors_occurred
+            columns:
+              - column: { name: occurred_at }

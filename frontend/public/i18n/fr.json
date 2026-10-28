@@ -8,7 +8,12 @@
     "confirm": "Confirmer",
     "close": "Fermer",
     "leave": "Quitter",
-    "stay": "Rester"
+    "stay": "Rester",
+    "back": "Retour",
+    "breadcrumb": "Fil d'Ariane",
+    "retry": "Réessayer",
+    "loadError": "Impossible de charger les données.",
+    "loading": "Chargement en cours"
   },
   "leave": {
     "title": "Modifications non enregistrées",
@@ -17,14 +22,17 @@
   "errors": {
     "generic": "Une erreur est survenue. Réessayez dans un instant.",
     "network": "Le serveur est injoignable. Vérifiez votre connexion puis réessayez.",
-    "formInvalid": "Le formulaire contient des erreurs. Corrigez les champs signalés."
+    "formInvalid": "Le formulaire contient des erreurs. Corrigez les champs signalés.",
+    "tooManyRequests": "Trop de demandes en peu de temps. Patientez un instant puis réessayez."
   },
   "validation": {
     "required": "Ce champ est obligatoire.",
     "email": "L'adresse e-mail n'est pas valide.",
     "passwordLength": "Le mot de passe doit contenir entre 8 et 72 caractères.",
     "passwordMismatch": "Les deux mots de passe ne sont pas identiques.",
-    "phone": "Le numéro de téléphone n'est pas valide."
+    "phone": "Le numéro de téléphone n'est pas valide.",
+    "quantity": "La quantité doit être supérieure à 0.",
+    "price": "Le prix doit être supérieur ou égal à 0."
   },
   "fields": {
     "email": "Adresse e-mail",
@@ -41,7 +49,10 @@
     "brand": "Marque",
     "model": "Modèle",
     "role": "Rôle",
-    "language": "Langue"
+    "language": "Langue",
+    "duration": "Durée",
+    "quoteTotal": "Total du devis",
+    "endTime": "Fin"
   },
   "roles": {
     "ADMIN": "Administrateur",
@@ -51,15 +62,18 @@
   "status": {
     "PLANNED": "Planifié",
     "COMPLETED": "Terminé",
-    "CANCELLED": "Annulé"
+    "CANCELLED": "Annulé",
+    "IN_PROGRESS": "En cours"
   },
   "menu": {
     "clients": "Clients",
     "appointments": "Rendez-vous",
-    "statistics": "Statistiques",
     "users": "Comptes",
     "settings": "Paramètres",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "dashboard": "Accueil",
+    "vehicles": "Véhicules",
+    "invoices": "Factures"
   },
   "login": {
     "title": "Connexion",
@@ -129,17 +143,11 @@
     "created": "Le rendez-vous de {{name}} a été créé.",
     "updated": "Le rendez-vous de {{name}} a été modifié.",
     "cancelled": "Le rendez-vous de {{name}} a été annulé.",
-    "completed": "Le rendez-vous de {{name}} est terminé."
-  },
-  "stats": {
-    "title": "Statistiques",
-    "year": "Année",
-    "chartTitle": "Rendez-vous par mois",
-    "planned": "Planifiés",
-    "completed": "Terminés",
-    "cancelled": "Annulés",
-    "xAxis": "Mois",
-    "yAxis": "Nombre de rendez-vous"
+    "completed": "Le rendez-vous de {{name}} est terminé.",
+    "start": "Démarrer",
+    "confirmStart": "Démarrer le rendez-vous de {{name}} ?",
+    "started": "Le rendez-vous de {{name}} est en cours.",
+    "allStatuses": "Tous les statuts"
   },
   "users": {
     "title": "Comptes",
@@ -149,7 +157,27 @@
     "notLinked": "Non rattaché",
     "empty": "Aucun compte",
     "clientPlaceholder": "Rechercher un client actif",
-    "updated": "Le compte de {{name}} a été modifié."
+    "updated": "Le compte de {{name}} a été modifié.",
+    "new": "Nouveau compte",
+    "create": "Créer le compte",
+    "emailTaken": "Cette adresse e-mail est déjà utilisée par un autre compte.",
+    "passwordRules": "Règles du mot de passe",
+    "passwordRejected": "Le mot de passe ne respecte pas les règles ci dessus.",
+    "ruleLength": "Entre 12 et 72 caractères",
+    "ruleUpper": "Au moins une majuscule",
+    "ruleLower": "Au moins une minuscule",
+    "ruleDigit": "Au moins un chiffre",
+    "created": "Le compte de {{name}} a été créé.",
+    "enabled": "Actif",
+    "disabled": "Inactif",
+    "enable": "Réactiver",
+    "disable": "Désactiver",
+    "confirmDisable": "Êtes-vous sûr de vouloir désactiver le compte de {{name}} ? Cette personne ne pourra plus se connecter.",
+    "confirmEnable": "Êtes-vous sûr de vouloir réactiver le compte de {{name}} ?",
+    "enabledDone": "Le compte de {{name}} a été réactivé.",
+    "disabledDone": "Le compte de {{name}} a été désactivé.",
+    "accountActive": "Compte actif",
+    "selfLocked": "Vous ne pouvez pas modifier votre propre rôle ni désactiver votre compte."
   },
   "settings": {
     "title": "Paramètres",
@@ -159,6 +187,187 @@
     "export": "Export Excel",
     "exportClients": "Exporter les clients",
     "exportAppointments": "Exporter les rendez-vous",
-    "exported": "Le fichier a été téléchargé."
+    "exported": "Le fichier a été téléchargé.",
+    "palette": "Couleur principale",
+    "palettes": {
+      "teal": "Teal",
+      "blue": "Bleu",
+      "indigo": "Indigo",
+      "green": "Vert",
+      "orange": "Orange",
+      "rose": "Rose"
+    }
+  },
+  "dashboard": {
+    "title": "Accueil",
+    "empty": "Aucun rendez-vous aujourd'hui",
+    "plannedNext7Days": "Planifiés sur 7 jours",
+    "activeClients": "Clients actifs",
+    "activeVehicles": "Véhicules actifs",
+    "monthCompleted": "Terminés ce mois",
+    "monthRevenue": "Chiffre d'affaires du mois",
+    "pendingInvoices": "{{count}} rendez-vous terminés attendent une facture.",
+    "goInvoices": "Aller aux factures",
+    "unpaidInvoices": "Factures impayées",
+    "seeUnpaid": "Voir les impayées",
+    "todayBlock": "Aujourd'hui",
+    "inProgressBlock": "En cours maintenant",
+    "upcomingBlock": "À venir",
+    "noneInProgress": "Aucun rendez-vous en cours",
+    "noUpcoming": "Aucun rendez-vous à venir"
+  },
+  "vehicles": {
+    "title": "Véhicules",
+    "searchPlaceholder": "Rechercher un véhicule",
+    "new": "Nouveau véhicule",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "empty": "Aucun véhicule",
+    "delete": "Supprimer",
+    "reactivate": "Réactiver",
+    "clientPlaceholder": "Rechercher un client actif",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer le véhicule {{name}} ?",
+    "confirmReactivate": "Êtes-vous sûr de vouloir réactiver le véhicule {{name}} ?",
+    "created": "Le véhicule {{name}} a été ajouté.",
+    "updated": "Le véhicule {{name}} a été modifié.",
+    "deleted": "Le véhicule {{name}} a été supprimé.",
+    "reactivated": "Le véhicule {{name}} a été réactivé."
+  },
+  "quote": {
+    "title": "Devis",
+    "loading": "Chargement du devis",
+    "none": "Aucun devis pour ce rendez-vous.",
+    "create": "Créer un devis",
+    "edit": "Modifier le devis",
+    "description": "Description",
+    "quantity": "Quantité",
+    "unitPrice": "Prix unitaire",
+    "lineTotal": "Total de ligne",
+    "total": "Total",
+    "addLine": "Ajouter une ligne",
+    "removeLine": "Retirer la ligne",
+    "minLines": "Ajoutez au moins une ligne.",
+    "accept": "Accepter",
+    "refuse": "Refuser",
+    "confirmAccept": "Accepter le devis du rendez-vous de {{name}} ?",
+    "confirmRefuse": "Refuser le devis du rendez-vous de {{name}} ?",
+    "created": "Le devis de {{name}} a été créé.",
+    "updated": "Le devis de {{name}} a été modifié.",
+    "accepted": "Le devis de {{name}} a été accepté.",
+    "refused": "Le devis de {{name}} a été refusé.",
+    "status": {
+      "DRAFT": "Brouillon",
+      "ACCEPTED": "Accepté",
+      "REFUSED": "Refusé"
+    }
+  },
+  "calendar": {
+    "month": "Mois",
+    "week": "Semaine",
+    "today": "Aujourd'hui",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "view": "Affichage",
+    "weekRange": "Du {{from}} au {{to}}",
+    "more": "+ {{count}} autres",
+    "day": "Jour",
+    "openDay": "Afficher la journée du {{date}}",
+    "timeRange": "{{from}} à {{to}}",
+    "workingOn": "Le garagiste travaille sur : {{vehicle}}",
+    "live": "En cours",
+    "dragHint": "Glissez un rendez-vous planifié pour le déplacer",
+    "moved": "Le rendez-vous de {{name}} a été déplacé au {{date}}.",
+    "moveLabel": "Déplacer le rendez-vous",
+    "move": "Déplacer",
+    "moveHelp": "Choisissez une nouvelle date et heure, par pas de 15 minutes. La durée est conservée."
+  },
+  "history": {
+    "empty": "Aucun rendez-vous pour le moment."
+  },
+  "clientDetail": {
+    "identity": "Identité",
+    "appointments": "Prestations",
+    "notFound": "Ce client est introuvable ou n'a pas pu être chargé."
+  },
+  "vehicleDetail": {
+    "identity": "Identité du véhicule",
+    "appointments": "Rendez-vous du véhicule",
+    "notFound": "Ce véhicule est introuvable ou n'a pas pu être chargé.",
+    "clientHint": "Ouvrir la fiche du client pour voir ses coordonnées et ses autres véhicules."
+  },
+  "invoices": {
+    "title": "Factures",
+    "searchPlaceholder": "Rechercher une facture",
+    "allStatuses": "Tous les statuts",
+    "number": "Numéro",
+    "appointmentDate": "Date du rendez-vous",
+    "issuedAt": "Date d'émission",
+    "paidAt": "Date de paiement",
+    "status": {
+      "ISSUED": "Émise",
+      "PAID": "Payée"
+    },
+    "empty": "Aucune facture pour le moment. Générez les factures des rendez-vous terminés.",
+    "emptyFiltered": "Aucune facture ne correspond à cette recherche",
+    "generate": "Générer les factures",
+    "export": "Exporter les factures",
+    "errorsLink": "Erreurs du batch",
+    "detailTitle": "Facture {{number}}",
+    "markPaid": "Marquer comme payée",
+    "downloadPdf": "Télécharger le PDF",
+    "confirmPay": "Marquer la facture {{number}} comme payée ?",
+    "paid": "La facture {{number}} est marquée comme payée.",
+    "resultTitle": "Résultat de la génération",
+    "read": "Lus",
+    "created": "Créées",
+    "skipped": "Ignorées",
+    "errors": "Erreurs",
+    "seeErrors": "Voir les erreurs",
+    "runStatus": {
+      "COMPLETED": "Terminée",
+      "FAILED": "Échec",
+      "STARTED": "En cours",
+      "STARTING": "En cours",
+      "STOPPED": "Arrêtée",
+      "STOPPING": "Arrêtée",
+      "ABANDONED": "Abandonnée",
+      "UNKNOWN": "Inconnu"
+    },
+    "errorsTitle": "Erreurs du batch",
+    "backToInvoices": "Retour aux factures",
+    "lastRuns": "Dernières exécutions",
+    "noRun": "Aucune exécution pour le moment",
+    "duration": "Durée",
+    "errorsList": "Erreurs",
+    "allRuns": "Toutes les exécutions",
+    "runFilter": "Filtrer par exécution",
+    "errorCode": "Erreur",
+    "message": "Message",
+    "appointment": "Rendez-vous",
+    "openAppointment": "Ouvrir le rendez-vous",
+    "noAppointment": "Aucun",
+    "noError": "Aucune erreur",
+    "errorCodes": {
+      "NO_ACCEPTED_QUOTE": {
+        "label": "Aucun devis accepté",
+        "help": "Le rendez-vous n'a pas de devis accepté. Faites accepter le devis par le client, puis relancez la génération."
+      },
+      "EMPTY_QUOTE": {
+        "label": "Devis vide",
+        "help": "Le devis ne contient aucune ligne. Ajoutez au moins une ligne au devis, puis relancez la génération."
+      },
+      "INVALID_AMOUNT": {
+        "label": "Montant invalide",
+        "help": "Le total du devis est nul ou négatif. Corrigez les prix ou les quantités du devis, puis relancez la génération."
+      },
+      "DUPLICATE_INVOICE": {
+        "label": "Facture déjà existante",
+        "help": "Ce rendez-vous a déjà une facture. Aucune action n'est nécessaire."
+      },
+      "UNEXPECTED": {
+        "label": "Erreur inattendue",
+        "help": "Un problème imprévu est survenu. Relancez la génération, et si cela se répète, contactez l'administrateur."
+      }
+    }
   }
 }

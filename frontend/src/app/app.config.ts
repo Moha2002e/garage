@@ -13,27 +13,18 @@ import Aura from '@primeuix/themes/aura';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../environments/environment';
 import { routes } from './app.routes';
+import { paletteById, readStoredPaletteId } from './core/palettes';
 import { apiInterceptor } from './core/http.interceptor';
 import { AuthService } from './services/auth.service';
 import { SettingsService } from './services/settings.service';
 
-// Palette sobre : gris ardoise pour les surfaces (Aura) et un vert sapin discret comme couleur principale.
+// Palette sobre : gris ardoise pour les surfaces (Aura) et une couleur principale au choix (teal par défaut).
+// La palette mémorisée est lue ici pour éviter un flash de la couleur par défaut au démarrage.
 const GaragePreset = definePreset(Aura, {
   semantic: {
-    primary: {
-      50: '{teal.50}',
-      100: '{teal.100}',
-      200: '{teal.200}',
-      300: '{teal.300}',
-      400: '{teal.400}',
-      500: '{teal.600}',
-      600: '{teal.700}',
-      700: '{teal.800}',
-      800: '{teal.900}',
-      900: '{teal.950}',
-      950: '{teal.950}'
-    }
+    primary: paletteById(readStoredPaletteId()).primary
   }
 });
 
@@ -44,7 +35,8 @@ export const appConfig: ApplicationConfig = {
     // Le jeton CSRF est ajouté par notre intercepteur (voir http.interceptor.ts), pas par Angular.
     provideHttpClient(withInterceptors([apiInterceptor]), withNoXsrfProtection()),
     providePrimeNG({
-      theme: { preset: GaragePreset, options: { darkModeSelector: '.app-dark' } }
+      theme: { preset: GaragePreset, options: { darkModeSelector: '.app-dark' } },
+      license: environment.primeUiLicense || undefined
     }),
     provideTranslateService({
       fallbackLang: 'fr',

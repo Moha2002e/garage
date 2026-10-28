@@ -1,0 +1,40 @@
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.run-filter {
+  min-width: 16rem;
+}
+
+.num {
+  text-align: right;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.help {
+  margin-top: 0.25rem;
+  color: var(--p-text-muted-color);
+  font-size: 0.9375rem;
+}
+
+.message {
+  max-width: 24rem;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+}

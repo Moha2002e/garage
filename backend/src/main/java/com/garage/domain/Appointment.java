@@ -8,6 +8,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,10 +30,19 @@ public class Appointment extends Auditable {
     @Column(name = "appointment_date", nullable = false)
     private Instant date;
 
+    /** Length of the appointment in minutes (15 to 480, by steps of 15). */
+    @Column(name = "duration_minutes", nullable = false)
+    private int durationMinutes = 60;
+
     @Column(nullable = false, length = 500)
     private String reason;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AppointmentStatus status = AppointmentStatus.PLANNED;
+
+    /** The appointment occupies the half open interval [date, endDate). */
+    public Instant getEndDate() {
+        return date.plus(Duration.ofMinutes(durationMinutes));
+    }
 }

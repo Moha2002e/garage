@@ -18,6 +18,7 @@ public final class VehicleDtos {
             @NotBlank @Size(max = 100) String model) {
     }
 
-    public record VehicleResponse(UUID id, UUID clientId, String plate, String brand, String model) {
+    public record VehicleResponse(UUID id, UUID clientId, String clientFirstName, String clientLastName,
+                                  String plate, String brand, String model, boolean active) {
     }
 }

@@ -2,11 +2,24 @@ package com.garage.domain;
 
 public enum AppointmentStatus {
     PLANNED,
+    IN_PROGRESS,
     COMPLETED,
     CANCELLED;
 
-    /** A planned appointment can be completed or cancelled; final statuses never change. */
+    /**
+     * PLANNED can start, complete or cancel; IN_PROGRESS can complete or cancel.
+     * COMPLETED and CANCELLED are final and never change.
+     */
     public boolean canTransitionTo(AppointmentStatus target) {
-        return this == PLANNED && (target == COMPLETED || target == CANCELLED);
+        return switch (this) {
+            case PLANNED -> target == IN_PROGRESS || target == COMPLETED || target == CANCELLED;
+            case IN_PROGRESS -> target == COMPLETED || target == CANCELLED;
+            case COMPLETED, CANCELLED -> false;
+        };
+    }
+
+    /** Statuses that occupy the garage agenda (used by the schedule conflict rules). */
+    public boolean occupiesAgenda() {
+        return this == PLANNED || this == IN_PROGRESS;
     }
 }

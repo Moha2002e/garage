@@ -8,7 +8,12 @@
     "confirm": "Confirm",
     "close": "Close",
     "leave": "Leave",
-    "stay": "Stay"
+    "stay": "Stay",
+    "back": "Back",
+    "breadcrumb": "Breadcrumb",
+    "retry": "Try again",
+    "loadError": "The data could not be loaded.",
+    "loading": "Loading"
   },
   "leave": {
     "title": "Unsaved changes",
@@ -17,14 +22,17 @@
   "errors": {
     "generic": "Something went wrong. Please try again in a moment.",
     "network": "The server cannot be reached. Check your connection and try again.",
-    "formInvalid": "The form contains errors. Please fix the highlighted fields."
+    "formInvalid": "The form contains errors. Please fix the highlighted fields.",
+    "tooManyRequests": "Too many requests in a short time. Please wait a moment and try again."
   },
   "validation": {
     "required": "This field is required.",
     "email": "The e-mail address is not valid.",
     "passwordLength": "The password must be between 8 and 72 characters long.",
     "passwordMismatch": "The two passwords do not match.",
-    "phone": "The phone number is not valid."
+    "phone": "The phone number is not valid.",
+    "quantity": "The quantity must be greater than 0.",
+    "price": "The price must be 0 or more."
   },
   "fields": {
     "email": "E-mail address",
@@ -41,7 +49,10 @@
     "brand": "Brand",
     "model": "Model",
     "role": "Role",
-    "language": "Language"
+    "language": "Language",
+    "duration": "Duration",
+    "quoteTotal": "Quote total",
+    "endTime": "End"
   },
   "roles": {
     "ADMIN": "Administrator",
@@ -51,15 +62,18 @@
   "status": {
     "PLANNED": "Planned",
     "COMPLETED": "Completed",
-    "CANCELLED": "Cancelled"
+    "CANCELLED": "Cancelled",
+    "IN_PROGRESS": "In progress"
   },
   "menu": {
     "clients": "Clients",
     "appointments": "Appointments",
-    "statistics": "Statistics",
     "users": "Accounts",
     "settings": "Settings",
-    "logout": "Log out"
+    "logout": "Log out",
+    "dashboard": "Home",
+    "vehicles": "Vehicles",
+    "invoices": "Invoices"
   },
   "login": {
     "title": "Log in",
@@ -129,17 +143,11 @@
     "created": "The appointment of {{name}} has been created.",
     "updated": "The appointment of {{name}} has been updated.",
     "cancelled": "The appointment of {{name}} has been cancelled.",
-    "completed": "The appointment of {{name}} is completed."
-  },
-  "stats": {
-    "title": "Statistics",
-    "year": "Year",
-    "chartTitle": "Appointments per month",
-    "planned": "Planned",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
-    "xAxis": "Month",
-    "yAxis": "Number of appointments"
+    "completed": "The appointment of {{name}} is completed.",
+    "start": "Start",
+    "confirmStart": "Start the appointment of {{name}}?",
+    "started": "The appointment of {{name}} is now in progress.",
+    "allStatuses": "All statuses"
   },
   "users": {
     "title": "Accounts",
@@ -149,7 +157,27 @@
     "notLinked": "Not linked",
     "empty": "No accounts",
     "clientPlaceholder": "Search for an active client",
-    "updated": "The account of {{name}} has been updated."
+    "updated": "The account of {{name}} has been updated.",
+    "new": "New account",
+    "create": "Create account",
+    "emailTaken": "This email address is already used by another account.",
+    "passwordRules": "Password rules",
+    "passwordRejected": "The password does not meet the rules above.",
+    "ruleLength": "Between 12 and 72 characters",
+    "ruleUpper": "At least one uppercase letter",
+    "ruleLower": "At least one lowercase letter",
+    "ruleDigit": "At least one digit",
+    "created": "The account of {{name}} was created.",
+    "enabled": "Active",
+    "disabled": "Inactive",
+    "enable": "Reactivate",
+    "disable": "Deactivate",
+    "confirmDisable": "Are you sure you want to deactivate the account of {{name}}? This person will no longer be able to sign in.",
+    "confirmEnable": "Are you sure you want to reactivate the account of {{name}}?",
+    "enabledDone": "The account of {{name}} was reactivated.",
+    "disabledDone": "The account of {{name}} was deactivated.",
+    "accountActive": "Account active",
+    "selfLocked": "You cannot change your own role or deactivate your own account."
   },
   "settings": {
     "title": "Settings",
@@ -159,6 +187,187 @@
     "export": "Excel export",
     "exportClients": "Export clients",
     "exportAppointments": "Export appointments",
-    "exported": "The file has been downloaded."
+    "exported": "The file has been downloaded.",
+    "palette": "Main colour",
+    "palettes": {
+      "teal": "Teal",
+      "blue": "Blue",
+      "indigo": "Indigo",
+      "green": "Green",
+      "orange": "Orange",
+      "rose": "Rose"
+    }
+  },
+  "dashboard": {
+    "title": "Home",
+    "empty": "No appointments today",
+    "plannedNext7Days": "Planned in 7 days",
+    "activeClients": "Active clients",
+    "activeVehicles": "Active vehicles",
+    "monthCompleted": "Completed this month",
+    "monthRevenue": "Revenue this month",
+    "pendingInvoices": "{{count}} completed appointments are waiting for an invoice.",
+    "goInvoices": "Go to invoices",
+    "unpaidInvoices": "Unpaid invoices",
+    "seeUnpaid": "See unpaid invoices",
+    "todayBlock": "Today",
+    "inProgressBlock": "In progress now",
+    "upcomingBlock": "Upcoming",
+    "noneInProgress": "No appointment in progress",
+    "noUpcoming": "No upcoming appointment"
+  },
+  "vehicles": {
+    "title": "Vehicles",
+    "searchPlaceholder": "Search for a vehicle",
+    "new": "New vehicle",
+    "active": "Active",
+    "inactive": "Inactive",
+    "empty": "No vehicles",
+    "delete": "Delete",
+    "reactivate": "Reactivate",
+    "clientPlaceholder": "Search for an active client",
+    "confirmDelete": "Are you sure you want to delete the vehicle {{name}}?",
+    "confirmReactivate": "Are you sure you want to reactivate the vehicle {{name}}?",
+    "created": "The vehicle {{name}} has been added.",
+    "updated": "The vehicle {{name}} has been updated.",
+    "deleted": "The vehicle {{name}} has been deleted.",
+    "reactivated": "The vehicle {{name}} has been reactivated."
+  },
+  "quote": {
+    "title": "Quote",
+    "loading": "Loading the quote",
+    "none": "No quote for this appointment.",
+    "create": "Create a quote",
+    "edit": "Edit the quote",
+    "description": "Description",
+    "quantity": "Quantity",
+    "unitPrice": "Unit price",
+    "lineTotal": "Line total",
+    "total": "Total",
+    "addLine": "Add a line",
+    "removeLine": "Remove the line",
+    "minLines": "Add at least one line.",
+    "accept": "Accept",
+    "refuse": "Refuse",
+    "confirmAccept": "Accept the quote for the appointment of {{name}}?",
+    "confirmRefuse": "Refuse the quote for the appointment of {{name}}?",
+    "created": "The quote for {{name}} has been created.",
+    "updated": "The quote for {{name}} has been updated.",
+    "accepted": "The quote for {{name}} has been accepted.",
+    "refused": "The quote for {{name}} has been refused.",
+    "status": {
+      "DRAFT": "Draft",
+      "ACCEPTED": "Accepted",
+      "REFUSED": "Refused"
+    }
+  },
+  "calendar": {
+    "month": "Month",
+    "week": "Week",
+    "today": "Today",
+    "previous": "Previous",
+    "next": "Next",
+    "view": "View",
+    "weekRange": "From {{from}} to {{to}}",
+    "more": "+ {{count}} more",
+    "day": "Day",
+    "openDay": "Show the day of {{date}}",
+    "timeRange": "{{from}} to {{to}}",
+    "workingOn": "The mechanic is working on: {{vehicle}}",
+    "live": "In progress",
+    "dragHint": "Drag a planned appointment to move it",
+    "moved": "{{name}}'s appointment has been moved to {{date}}.",
+    "moveLabel": "Move the appointment",
+    "move": "Move",
+    "moveHelp": "Pick a new date and time, in 15 minute steps. The duration is kept."
+  },
+  "history": {
+    "empty": "No appointments yet."
+  },
+  "clientDetail": {
+    "identity": "Identity",
+    "appointments": "Services",
+    "notFound": "This client was not found or could not be loaded."
+  },
+  "vehicleDetail": {
+    "identity": "Vehicle identity",
+    "appointments": "Vehicle appointments",
+    "notFound": "This vehicle was not found or could not be loaded.",
+    "clientHint": "Open the client record to see contact details and other vehicles."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "searchPlaceholder": "Search for an invoice",
+    "allStatuses": "All statuses",
+    "number": "Number",
+    "appointmentDate": "Appointment date",
+    "issuedAt": "Issue date",
+    "paidAt": "Payment date",
+    "status": {
+      "ISSUED": "Issued",
+      "PAID": "Paid"
+    },
+    "empty": "No invoice yet. Generate the invoices of completed appointments.",
+    "emptyFiltered": "No invoice matches this search",
+    "generate": "Generate invoices",
+    "export": "Export invoices",
+    "errorsLink": "Batch errors",
+    "detailTitle": "Invoice {{number}}",
+    "markPaid": "Mark as paid",
+    "downloadPdf": "Download PDF",
+    "confirmPay": "Mark invoice {{number}} as paid?",
+    "paid": "Invoice {{number}} is marked as paid.",
+    "resultTitle": "Generation result",
+    "read": "Read",
+    "created": "Created",
+    "skipped": "Skipped",
+    "errors": "Errors",
+    "seeErrors": "See the errors",
+    "runStatus": {
+      "COMPLETED": "Completed",
+      "FAILED": "Failed",
+      "STARTED": "Running",
+      "STARTING": "Running",
+      "STOPPED": "Stopped",
+      "STOPPING": "Stopped",
+      "ABANDONED": "Abandoned",
+      "UNKNOWN": "Unknown"
+    },
+    "errorsTitle": "Batch errors",
+    "backToInvoices": "Back to invoices",
+    "lastRuns": "Latest runs",
+    "noRun": "No run yet",
+    "duration": "Duration",
+    "errorsList": "Errors",
+    "allRuns": "All runs",
+    "runFilter": "Filter by run",
+    "errorCode": "Error",
+    "message": "Message",
+    "appointment": "Appointment",
+    "openAppointment": "Open the appointment",
+    "noAppointment": "None",
+    "noError": "No error",
+    "errorCodes": {
+      "NO_ACCEPTED_QUOTE": {
+        "label": "No accepted quote",
+        "help": "The appointment has no accepted quote. Get the quote accepted by the client, then run the generation again."
+      },
+      "EMPTY_QUOTE": {
+        "label": "Empty quote",
+        "help": "The quote has no line. Add at least one line to the quote, then run the generation again."
+      },
+      "INVALID_AMOUNT": {
+        "label": "Invalid amount",
+        "help": "The quote total is zero or negative. Fix the prices or quantities of the quote, then run the generation again."
+      },
+      "DUPLICATE_INVOICE": {
+        "label": "Invoice already exists",
+        "help": "This appointment already has an invoice. No action is needed."
+      },
+      "UNEXPECTED": {
+        "label": "Unexpected error",
+        "help": "An unexpected problem occurred. Run the generation again, and if it keeps happening, contact the administrator."
+      }
+    }
   }
 }

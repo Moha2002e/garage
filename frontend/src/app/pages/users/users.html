@@ -24,6 +24,10 @@
       <ng-template #selectedItem let-role>{{ 'roles.' + role | translate }}</ng-template>
       <ng-template #item let-role>{{ 'roles.' + role | translate }}</ng-template>
     </p-select>
+
+    @if (auth.isAdmin()) {
+      <p-button icon="pi pi-plus" [label]="'users.new' | translate" (onClick)="startCreate()" />
+    }
   </div>
 
   <p-table
@@ -46,6 +50,7 @@
         <th>{{ 'fields.email' | translate }}</th>
         <th>{{ 'fields.role' | translate }}</th>
         <th>{{ 'users.linkedClient' | translate }}</th>
+        <th>{{ 'fields.status' | translate }}</th>
         <th>{{ 'common.action' | translate }}</th>
       </tr>
     </ng-template>
@@ -64,6 +69,12 @@
           }
         </td>
         <td>
+          <p-tag
+            [value]="(user.enabled ? 'users.enabled' : 'users.disabled') | translate"
+            [severity]="user.enabled ? 'success' : 'danger'"
+          />
+        </td>
+        <td>
           <p-button
             [label]="'common.detail' | translate"
             size="small"
@@ -76,23 +87,34 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6">{{ 'users.empty' | translate }}</td>
+        <td colspan="7">{{ 'users.empty' | translate }}</td>
       </tr>
     </ng-template>
   </p-table>
 </section>
 
-<p-drawer
-  [(visible)]="drawerOpen"
-  position="right"
+<p-dialog
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
   [closable]="false"
-  [dismissible]="false"
-  [closeOnEscape]="false"
-  [style]="{ width: 'min(30rem, 100vw)' }"
+  [dismissableMask]="!hasUnsavedChanges()"
+  [closeOnEscape]="!hasUnsavedChanges()"
+  [style]="{ width: '36rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
+  (onHide)="onDialogHidden()"
 >
   <ng-template #header>
-    <div class="drawer-header">
-      <span class="drawer-title">{{ selectedName() }}</span>
+    <div class="dialog-header">
+      <span class="dialog-title">
+        @if (mode() === 'create') {
+          {{ 'users.new' | translate }}
+        } @else {
+          {{ selectedName() }}
+        }
+      </span>
       <p-button
         icon="pi pi-times"
         [rounded]="true"
@@ -104,37 +126,141 @@
     </div>
   </ng-template>
 
-  @if (selected(); as user) {
-    @if (!isEditing()) {
-      <dl class="fact-sheet">
-        <dt>{{ 'fields.email' | translate }}</dt>
-        <dd>{{ user.email }}</dd>
-        <dt>{{ 'fields.role' | translate }}</dt>
-        <dd>{{ 'roles.' + user.role | translate }}</dd>
-        <dt>{{ 'fields.language' | translate }}</dt>
-        <dd>{{ user.language }}</dd>
-        @if (user.role === 'CLIENT') {
-          <dt>{{ 'users.linkedClient' | translate }}</dt>
-          <dd>{{ user.clientId ? linkedClientName() : ('users.notLinked' | translate) }}</dd>
-        }
-      </dl>
-      <div class="drawer-actions">
-        <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
-      </div>
-    } @else {
-      <form class="drawer-form" [formGroup]="userForm" (ngSubmit)="save()" novalidate>
+  @switch (mode()) {
+    @case ('create') {
+      <form class="dialog-form" [formGroup]="createForm" (ngSubmit)="create()" novalidate>
         <div class="field">
-          <label for="role">{{ 'fields.role' | translate }}</label>
-          <p-select
-            inputId="role"
-            formControlName="role"
-            [options]="roles"
-            [disabled]="!auth.isAdmin()"
+          <label for="newFirstName">{{ 'fields.firstName' | translate }}</label>
+          <input pInputText id="newFirstName" formControlName="firstName" fluid />
+          @if (createForm.controls.firstName.touched && createForm.controls.firstName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="newLastName">{{ 'fields.lastName' | translate }}</label>
+          <input pInputText id="newLastName" formControlName="lastName" fluid />
+          @if (createForm.controls.lastName.touched && createForm.controls.lastName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="newEmail">{{ 'fields.email' | translate }}</label>
+          <input
+            pInputText
+            id="newEmail"
+            type="email"
+            formControlName="email"
+            autocomplete="off"
+            (input)="emailTaken.set(false)"
             fluid
-          >
+          />
+          @if (emailTaken()) {
+            <small class="field-error">{{ 'users.emailTaken' | translate }}</small>
+          } @else if (createForm.controls.email.touched && createForm.controls.email.errors) {
+            <small class="field-error">
+              {{ (createForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
+            </small>
+          }
+        </div>
+        <div class="field">
+          <label for="newPassword">{{ 'fields.password' | translate }}</label>
+          <p-password
+            inputId="newPassword"
+            formControlName="password"
+            [feedback]="false"
+            [toggleMask]="true"
+            autocomplete="new-password"
+            (input)="passwordServerError.set(null)"
+            fluid
+          />
+          <ul class="rules" [attr.aria-label]="'users.passwordRules' | translate">
+            @for (rule of passwordChecks(); track rule.key) {
+              <li [class.ok]="rule.ok">
+                <i [class]="rule.ok ? 'pi pi-check-circle' : 'pi pi-circle'" aria-hidden="true"></i>
+                <span>{{ rule.key | translate }}</span>
+              </li>
+            }
+          </ul>
+          @if (passwordServerError(); as message) {
+            <small class="field-error">{{ message }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="newRole">{{ 'fields.role' | translate }}</label>
+          <p-select inputId="newRole" formControlName="role" [options]="roles" fluid>
             <ng-template #selectedItem let-role>{{ 'roles.' + role | translate }}</ng-template>
             <ng-template #item let-role>{{ 'roles.' + role | translate }}</ng-template>
           </p-select>
+        </div>
+
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'users.create' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="cancelEdit()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+
+    @case ('confirm') {
+      <div class="confirm-view">
+        <i class="pi pi-exclamation-triangle confirm-icon"></i>
+        <p>
+          {{
+            (selected()?.enabled ? 'users.confirmDisable' : 'users.confirmEnable')
+              | translate: { name: selectedName() }
+          }}
+        </p>
+        <div class="dialog-actions">
+          <p-button
+            [label]="'common.confirm' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+            (onClick)="confirmToggleEnabled()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="mode.set('view')"
+          />
+        </div>
+      </div>
+    }
+
+    @case ('edit') {
+      <form class="dialog-form" [formGroup]="userForm" (ngSubmit)="save()" novalidate>
+        <div class="field">
+          <label for="firstName">{{ 'fields.firstName' | translate }}</label>
+          <input pInputText id="firstName" formControlName="firstName" fluid />
+          @if (userForm.controls.firstName.touched && userForm.controls.firstName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="lastName">{{ 'fields.lastName' | translate }}</label>
+          <input pInputText id="lastName" formControlName="lastName" fluid />
+          @if (userForm.controls.lastName.touched && userForm.controls.lastName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="role">{{ 'fields.role' | translate }}</label>
+          <p-select inputId="role" formControlName="role" [options]="roles" fluid>
+            <ng-template #selectedItem let-role>{{ 'roles.' + role | translate }}</ng-template>
+            <ng-template #item let-role>{{ 'roles.' + role | translate }}</ng-template>
+          </p-select>
+          @if (isSelf()) {
+            <small class="muted">{{ 'users.selfLocked' | translate }}</small>
+          }
         </div>
 
         @if (userForm.controls.role.value === 'CLIENT') {
@@ -155,13 +281,13 @@
           </div>
         }
 
-        <div class="drawer-actions">
-          <p-button
-            type="submit"
-            [label]="'common.save' | translate"
-            [loading]="isSaving()"
-            [disabled]="isSaving()"
-          />
+        <div class="field switch-field">
+          <label for="enabled">{{ 'users.accountActive' | translate }}</label>
+          <p-toggleswitch inputId="enabled" formControlName="enabled" />
+        </div>
+
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
           <p-button
             [label]="'common.cancel' | translate"
             severity="secondary"
@@ -175,5 +301,43 @@
         }
       </form>
     }
+
+    @default {
+      @if (selected(); as user) {
+        <dl class="fact-sheet">
+          <dt>{{ 'fields.email' | translate }}</dt>
+          <dd>{{ user.email }}</dd>
+          <dt>{{ 'fields.role' | translate }}</dt>
+          <dd>{{ 'roles.' + user.role | translate }}</dd>
+          <dt>{{ 'fields.language' | translate }}</dt>
+          <dd>{{ user.language }}</dd>
+          <dt>{{ 'fields.status' | translate }}</dt>
+          <dd>
+            <p-tag
+              [value]="(user.enabled ? 'users.enabled' : 'users.disabled') | translate"
+              [severity]="user.enabled ? 'success' : 'danger'"
+            />
+          </dd>
+          @if (user.role === 'CLIENT') {
+            <dt>{{ 'users.linkedClient' | translate }}</dt>
+            <dd>{{ user.clientId ? linkedClientName() : ('users.notLinked' | translate) }}</dd>
+          }
+        </dl>
+        <div class="dialog-actions">
+          @if (auth.canWrite()) {
+            <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
+          }
+          @if (auth.isAdmin() && !isSelf()) {
+            <p-button
+              [icon]="user.enabled ? 'pi pi-ban' : 'pi pi-replay'"
+              [label]="(user.enabled ? 'users.disable' : 'users.enable') | translate"
+              [severity]="user.enabled ? 'danger' : 'secondary'"
+              [outlined]="true"
+              (onClick)="startConfirm()"
+            />
+          }
+        </div>
+      }
+    }
   }
-</p-drawer>
+</p-dialog>

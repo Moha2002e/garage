@@ -1,0 +1,63 @@
+# Pile complete Garage : PostgreSQL + backend Spring Boot + front Angular.
+# Ports reserves a Garage (un port par application, pour ne jamais entrer en conflit avec Banque ou DentFlow) :
+#   front    http://garage.localhost:4201
+#   backend  http://garage.localhost:8082
+#   postgres localhost:5434
+# Lancement : garage.bat (il passe --env-file backend\.env). Arret : garage-arreter.bat.
+#   docker compose --env-file backend/.env up -d --build
+#   docker compose down            arreter (les donnees restent dans le volume)
+
+name: garage-app
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: garage-app-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-garage}
+      POSTGRES_USER: ${DB_USER:-garage}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD doit etre defini dans backend/.env}
+    ports:
+      - "5434:5432"
+    volumes:
+      # Meme volume que backend/docker-compose.yml (mode IntelliJ) : les donnees de test sont conservees.
+      # Ne lancez pas les deux bases en meme temps.
+      - garage-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-garage} -d ${DB_NAME:-garage}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: garage-app-backend
+    restart: on-failure:5
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - backend/.env
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-garage}
+      FRONT_URL: http://garage.localhost:4201
+      COOKIE_SECURE: "false"
+      TZ: Europe/Paris
+    ports:
+      - "8082:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_URL: http://garage.localhost:8082
+    container_name: garage-app-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4201:80"
+
+volumes:
+  garage-pgdata:
+    # Nom du volume cree par backend/docker-compose.yml (dossier "backend" + nom du volume).
+    name: backend_garage-pgdata

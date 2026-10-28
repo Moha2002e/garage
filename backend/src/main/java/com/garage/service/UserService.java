@@ -4,6 +4,8 @@ import com.garage.domain.Client;
 import com.garage.domain.Role;
 import com.garage.domain.User;
 import com.garage.dto.PageResponse;
+import com.garage.dto.UserDtos.CreateUserRequest;
+import com.garage.dto.UserDtos.UpdateUserRequest;
 import com.garage.dto.UserDtos.UserResponse;
 import com.garage.exception.BusinessException;
 import com.garage.exception.ConflictException;
@@ -15,6 +17,7 @@ import com.garage.util.PageUtil;
 import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +27,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final CurrentUser currentUser;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, ClientRepository clientRepository, CurrentUser currentUser) {
+    public UserService(UserRepository userRepository, ClientRepository clientRepository, CurrentUser currentUser,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.clientRepository = clientRepository;
         this.currentUser = currentUser;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -46,6 +52,48 @@ public class UserService {
         }
         var pageable = PageUtil.of(page, size, Sort.by("lastName", "firstName"));
         return PageResponse.from(userRepository.findAll(spec, pageable), this::toResponse);
+    }
+
+    /** Account created by an administrator (any role); the password is stored hashed and never returned. */
+    @Transactional
+    public UserResponse create(CreateUserRequest request) {
+        String email = request.email().trim().toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new ConflictException("Email already registered");
+        }
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setFirstName(request.firstName().trim());
+        user.setLastName(request.lastName().trim());
+        user.setRole(request.role());
+        user.setEnabled(true);
+        return toResponse(userRepository.save(user));
+    }
+
+    /**
+     * Name, role and activation. An administrator cannot deactivate their own account nor remove
+     * their own ADMIN role. Leaving the CLIENT role drops the client record link.
+     */
+    @Transactional
+    public UserResponse update(UUID id, UpdateUserRequest request) {
+        User user = find(id);
+        if (user.getId().equals(currentUser.get().id())) {
+            if (request.role() != Role.ADMIN) {
+                throw new BusinessException("You cannot remove your own administrator role");
+            }
+            if (!request.enabled()) {
+                throw new BusinessException("You cannot deactivate your own account");
+            }
+        }
+        user.setFirstName(request.firstName().trim());
+        user.setLastName(request.lastName().trim());
+        user.setRole(request.role());
+        user.setEnabled(request.enabled());
+        if (request.role() != Role.CLIENT) {
+            user.setClient(null);
+        }
+        return toResponse(user);
     }
 
     @Transactional

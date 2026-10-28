@@ -1,0 +1,71 @@
+<p-table
+  [value]="items()"
+  [lazy]="true"
+  (onLazyLoad)="onLazyLoad($event)"
+  [paginator]="true"
+  [rows]="rows()"
+  [first]="first()"
+  [totalRecords]="total()"
+  [loading]="isLoading()"
+  [rowsPerPageOptions]="[10, 25]"
+  [rowHover]="true"
+  dataKey="id"
+>
+  <ng-template #header>
+    <tr>
+      <th>{{ 'fields.date' | translate }}</th>
+      @if (showVehicle()) {
+        <th>{{ 'fields.vehicle' | translate }}</th>
+      }
+      <th>{{ 'fields.reason' | translate }}</th>
+      <th>{{ 'fields.status' | translate }}</th>
+      <th>{{ 'fields.quoteTotal' | translate }}</th>
+      <th>{{ 'common.action' | translate }}</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-appointment>
+    <tr class="row-clickable p-selectable-row" (click)="openAppointment(appointment.id)">
+      <td>{{ appointment.date | date: settings.dateFormat().angular + ' HH:mm' }}</td>
+      @if (showVehicle()) {
+        <td>{{ appointment.brand }} {{ appointment.model }}, {{ appointment.plate }}</td>
+      }
+      <td class="reason">{{ appointment.reason }}</td>
+      <td>
+        <p-tag [value]="'status.' + appointment.status | translate" [severity]="severity(appointment.status)" />
+      </td>
+      <td>{{ money(appointment.quoteTotal) }}</td>
+      <td>
+        <p-button
+          [label]="'common.detail' | translate"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="$event.stopPropagation(); openAppointment(appointment.id)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr>
+      <td [attr.colspan]="showVehicle() ? 6 : 5">
+        <div class="empty-state">
+          @if (hasError()) {
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ 'common.loadError' | translate }}</span>
+            <p-button
+              icon="pi pi-refresh"
+              [label]="'common.retry' | translate"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="load()"
+            />
+          } @else if (!isLoading()) {
+            <i class="pi pi-calendar"></i>
+            <span>{{ 'history.empty' | translate }}</span>
+          }
+        </div>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

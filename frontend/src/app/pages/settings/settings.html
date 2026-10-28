@@ -1,7 +1,7 @@
-<section class="page">
+<section class="page page-centered">
   <h1 class="page-title">{{ 'settings.title' | translate }}</h1>
 
-  <div class="settings-list">
+  <div class="card settings-list">
     <div class="setting">
       <label for="dark">{{ 'settings.darkMode' | translate }}</label>
       <p-toggleswitch
@@ -9,6 +9,28 @@
         [ngModel]="settings.theme() === 'dark'"
         (ngModelChange)="onThemeChange($event)"
       />
+    </div>
+
+    <div class="setting">
+      <span id="palette-label">{{ 'settings.palette' | translate }}</span>
+      <div class="swatches" role="group" aria-labelledby="palette-label">
+        @for (palette of palettes; track palette.id) {
+          <button
+            type="button"
+            class="swatch"
+            [class.is-selected]="settings.paletteId() === palette.id"
+            [style.background-color]="palette.hex"
+            [attr.aria-pressed]="settings.paletteId() === palette.id"
+            [attr.aria-label]="'settings.palettes.' + palette.id | translate"
+            [attr.title]="'settings.palettes.' + palette.id | translate"
+            (click)="onPaletteChange(palette.id)"
+          >
+            @if (settings.paletteId() === palette.id) {
+              <i class="pi pi-check"></i>
+            }
+          </button>
+        }
+      </div>
     </div>
 
     <div class="setting">

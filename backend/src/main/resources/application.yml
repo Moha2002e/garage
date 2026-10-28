@@ -17,6 +17,16 @@ spring:
           time_zone: UTC
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+  batch:
+    job:
+      # Never launch a job at startup: the invoice job only runs on POST /api/invoices/batch/run.
+      enabled: false
+    jdbc:
+      # Creates the Spring Batch metadata tables (BATCH_JOB_INSTANCE, BATCH_JOB_EXECUTION, BATCH_STEP_EXECUTION...)
+      # and their sequences when they are missing. They are not entities and not in Liquibase, so Hibernate
+      # (ddl-auto: validate) ignores them. With "always", Spring Boot replays the creation script at every start
+      # and ignores the "already exists" errors (they only show up in the logs).
+      initialize-schema: always
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
@@ -25,7 +35,7 @@ spring:
     suffix: .ftl
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 app:
   jwt:
@@ -40,6 +50,23 @@ app:
   mail-from: ${MAIL_FROM:no-reply@garage.local}
   reset-token-minutes: 30
   export-max-rows: 5000
+  garage:
+    capacity: ${GARAGE_CAPACITY:3}
+    # Letterhead of the invoice PDF. The defaults are fictitious examples: set the real values in .env.
+    company:
+      name: ${GARAGE_COMPANY_NAME:Garage Exemple}
+      address: ${GARAGE_COMPANY_ADDRESS:12 rue Exemple}
+      postalCode: ${GARAGE_COMPANY_POSTAL_CODE:0000}
+      city: ${GARAGE_COMPANY_CITY:Ville Exemple}
+      country: ${GARAGE_COMPANY_COUNTRY:Belgique}
+      vatNumber: ${GARAGE_COMPANY_VAT_NUMBER:BE0000.000.000}
+      iban: ${GARAGE_COMPANY_IBAN:BE00 0000 0000 0000}
+      bic: ${GARAGE_COMPANY_BIC:EXAMBEBB}
+      email: ${GARAGE_COMPANY_EMAIL:contact@garage-exemple.invalid}
+      phone: ${GARAGE_COMPANY_PHONE:+32 00 00 00 00}
+  invoice:
+    # VAT percentage added to the invoice total (quote amounts are excluding VAT).
+    vatRate: ${INVOICE_VAT_RATE:21}
   admin:
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}

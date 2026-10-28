@@ -1,11 +1,24 @@
 <div class="shell">
   <aside class="sidebar">
     <div class="brand">
-      <i class="pi pi-wrench"></i>
+      <app-logo class="brand-logo" />
       <span>Garage</span>
     </div>
 
-    <p-panelmenu [model]="menuItems()" [multiple]="false" styleClass="menu" />
+    <nav class="menu" aria-label="Menu">
+      @for (entry of entries(); track entry.route) {
+        <a
+          class="menu-item"
+          [routerLink]="entry.route"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+        >
+          <i [class]="entry.icon"></i>
+          <span class="menu-label">{{ entry.key | translate }}</span>
+          <span class="menu-dot" aria-hidden="true"></span>
+        </a>
+      }
+    </nav>
 
     <div class="sidebar-footer">
       @if (auth.user(); as user) {

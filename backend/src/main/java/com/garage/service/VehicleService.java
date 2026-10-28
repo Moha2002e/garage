@@ -1,6 +1,10 @@
 package com.garage.service;
 
+import com.garage.domain.AppointmentStatus;
+import com.garage.domain.Client;
+import com.garage.domain.Role;
 import com.garage.domain.Vehicle;
+import com.garage.dto.PageResponse;
 import com.garage.dto.VehicleDtos.VehicleRequest;
 import com.garage.dto.VehicleDtos.VehicleResponse;
 import com.garage.exception.BusinessException;
@@ -8,31 +12,72 @@ import com.garage.exception.ConflictException;
 import com.garage.exception.NotFoundException;
 import com.garage.repository.AppointmentRepository;
 import com.garage.repository.VehicleRepository;
+import com.garage.security.AuthUser;
+import com.garage.security.CurrentUser;
+import com.garage.util.PageUtil;
 import com.garage.util.PlateUtil;
+import jakarta.persistence.criteria.Join;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class VehicleService {
 
+    private static final Sort SORT = Sort.by("brand", "model", "plate");
+
     private final VehicleRepository vehicleRepository;
     private final AppointmentRepository appointmentRepository;
     private final ClientService clientService;
+    private final CurrentUser currentUser;
 
     public VehicleService(VehicleRepository vehicleRepository, AppointmentRepository appointmentRepository,
-                          ClientService clientService) {
+                          ClientService clientService, CurrentUser currentUser) {
         this.vehicleRepository = vehicleRepository;
         this.appointmentRepository = appointmentRepository;
         this.clientService = clientService;
+        this.currentUser = currentUser;
     }
 
+    // ******************************************
+    // ************ GET ************
+    // ******************************************
+
+    /** Paginated list for the vehicles page: sorted by brand then model, active filter optional. */
+    @Transactional(readOnly = true)
+    public PageResponse<VehicleResponse> search(String q, Boolean active, int page, int size) {
+        return PageResponse.from(vehicleRepository.findAll(spec(q, active), PageUtil.of(page, size, SORT)),
+                VehicleService::toResponse);
+    }
+
+    /** Only active vehicles: this list feeds the vehicle choice of an appointment. */
     @Transactional(readOnly = true)
     public List<VehicleResponse> listByClient(UUID clientId) {
-        clientService.find(clientId);
-        return vehicleRepository.findByClientIdOrderByPlate(clientId).stream().map(VehicleService::toResponse).toList();
+        return listByClient(clientId, true);
     }
+
+    /** active = true: active vehicles only; null (or false): every vehicle of the client, active or not. */
+    @Transactional(readOnly = true)
+    public List<VehicleResponse> listByClient(UUID clientId, Boolean active) {
+        clientService.find(clientId);
+        List<Vehicle> vehicles = Boolean.TRUE.equals(active)
+                ? vehicleRepository.findByClientIdAndActiveTrueOrderByPlate(clientId)
+                : vehicleRepository.findByClientIdOrderByPlate(clientId);
+        return vehicles.stream().map(VehicleService::toResponse).toList();
+    }
+
+    /** One vehicle with its client; a CLIENT only gets a vehicle of their own client record (else 404). */
+    @Transactional(readOnly = true)
+    public VehicleResponse get(UUID id) {
+        return toResponse(findAccessible(id));
+    }
+
+    // ******************************************
+    // ************ POST ************
+    // ******************************************
 
     @Transactional
     public VehicleResponse create(VehicleRequest request) {
@@ -45,6 +90,10 @@ public class VehicleService {
         apply(vehicle, request, plate);
         return toResponse(vehicleRepository.save(vehicle));
     }
+
+    // ******************************************
+    // ************ UPDATE ************
+    // ******************************************
 
     @Transactional
     public VehicleResponse update(UUID id, VehicleRequest request) {
@@ -60,17 +109,46 @@ public class VehicleService {
         return toResponse(vehicle);
     }
 
+    // ******************************************
+    // ************ DELETE ************
+    // ******************************************
+
+    /** Deactivation, never a physical deletion. Refused while the vehicle has upcoming work. */
     @Transactional
-    public void delete(UUID id) {
+    public void deactivate(UUID id) {
         Vehicle vehicle = find(id);
-        if (appointmentRepository.existsByVehicleId(id)) {
-            throw new ConflictException("This vehicle has appointments and cannot be deleted");
+        if (appointmentRepository.existsByVehicleIdAndStatusIn(id,
+                List.of(AppointmentStatus.PLANNED, AppointmentStatus.IN_PROGRESS))) {
+            throw new ConflictException("This vehicle has planned or in progress appointments and cannot be deactivated");
         }
-        vehicleRepository.delete(vehicle);
+        vehicle.setActive(false);
     }
 
+    // ******************************************
+    // ************ PERSONNALISÉES ************
+    // ******************************************
+
+    @Transactional
+    public VehicleResponse reactivate(UUID id) {
+        Vehicle vehicle = find(id);
+        vehicle.setActive(true);
+        return toResponse(vehicle);
+    }
+
+    /** Also used by the appointment service; the client is loaded with the vehicle. */
     Vehicle find(UUID id) {
-        return vehicleRepository.findById(id).orElseThrow(() -> new NotFoundException("Vehicle not found"));
+        return vehicleRepository.findWithClientById(id).orElseThrow(() -> new NotFoundException("Vehicle not found"));
+    }
+
+    /** Loads a vehicle the current user may see; another client's vehicle is a 404, not a 403. */
+    Vehicle findAccessible(UUID id) {
+        Vehicle vehicle = find(id);
+        AuthUser user = currentUser.get();
+        if (user.role() == Role.CLIENT
+                && (user.clientId() == null || !user.clientId().equals(vehicle.getClient().getId()))) {
+            throw new NotFoundException("Vehicle not found");
+        }
+        return vehicle;
     }
 
     private String normalizedPlate(String raw) {
@@ -88,7 +166,29 @@ public class VehicleService {
         vehicle.setModel(request.model().trim());
     }
 
+    private Specification<Vehicle> spec(String q, Boolean active) {
+        Specification<Vehicle> spec = Specification.where(null);
+        if (q != null && !q.isBlank()) {
+            String like = PageUtil.likeTerm(q);
+            spec = spec.and((root, query, cb) -> {
+                Join<Vehicle, Client> client = root.join("client");
+                return cb.or(
+                        cb.like(cb.lower(root.get("plate")), like, '\\'),
+                        cb.like(cb.lower(root.get("brand")), like, '\\'),
+                        cb.like(cb.lower(root.get("model")), like, '\\'),
+                        cb.like(cb.lower(client.get("lastName")), like, '\\'),
+                        cb.like(cb.lower(client.get("firstName")), like, '\\'));
+            });
+        }
+        if (active != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("active"), active));
+        }
+        return spec;
+    }
+
     static VehicleResponse toResponse(Vehicle v) {
-        return new VehicleResponse(v.getId(), v.getClient().getId(), v.getPlate(), v.getBrand(), v.getModel());
+        Client c = v.getClient();
+        return new VehicleResponse(v.getId(), c.getId(), c.getFirstName(), c.getLastName(), v.getPlate(),
+                v.getBrand(), v.getModel(), v.isActive());
     }
 }

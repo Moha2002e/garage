@@ -28,4 +28,8 @@ public class Vehicle extends Auditable {
 
     @Column(nullable = false)
     private String model;
+
+    /** A vehicle is never deleted: it is deactivated instead. */
+    @Column(nullable = false)
+    private boolean active = true;
 }

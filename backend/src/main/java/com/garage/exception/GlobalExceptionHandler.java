@@ -31,6 +31,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(PdfGenerationException.class)
+    ResponseEntity<ErrorResponse> pdfFailure(PdfGenerationException ex) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+    }
+
     @ExceptionHandler(BusinessException.class)
     ResponseEntity<ErrorResponse> business(BusinessException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());

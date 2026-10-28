@@ -8,6 +8,7 @@ import { Checkbox } from 'primeng/checkbox';
 import { InputText } from 'primeng/inputtext';
 import { Message } from 'primeng/message';
 import { Password } from 'primeng/password';
+import { AppLogo } from '../../layout/app-logo';
 import { LanguageSwitch } from '../../layout/language-switch';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -24,7 +25,8 @@ import { NotificationService } from '../../services/notification.service';
     InputText,
     Message,
     Password,
-    LanguageSwitch
+    LanguageSwitch,
+    AppLogo
   ],
   templateUrl: './login.html',
   styleUrl: './login.css'

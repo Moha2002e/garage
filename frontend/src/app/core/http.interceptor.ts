@@ -23,7 +23,8 @@ const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
  */
 export const apiInterceptor: HttpInterceptorFn = (req, next) => {
   // On ne touche pas aux autres requêtes (fichiers de traduction, etc.).
-  if (!req.url.startsWith(environment.apiBaseUrl)) {
+  // Sur Vercel, apiBaseUrl est vide et l'API est jointe via /api : on ne cible donc que les URL en /api.
+  if (!req.url.startsWith(`${environment.apiBaseUrl}/api`)) {
     return next(req);
   }
 

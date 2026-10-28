@@ -1,6 +1,7 @@
 package com.garage.controller;
 
 import com.garage.domain.AppointmentStatus;
+import com.garage.domain.InvoiceStatus;
 import com.garage.service.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +46,13 @@ public class ExportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return file("appointments.xls", exportService.exportAppointments(q, status, from, to));
+    }
+
+    @GetMapping("/invoices.xls")
+    @Operation(summary = "Export invoices with the same filters as the list (capped at 5000 rows)")
+    public ResponseEntity<byte[]> invoices(@RequestParam(required = false) String q,
+                                           @RequestParam(required = false) InvoiceStatus status) {
+        return file("invoices.xls", exportService.exportInvoices(q, status));
     }
 
     private ResponseEntity<byte[]> file(String name, byte[] content) {

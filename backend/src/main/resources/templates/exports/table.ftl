@@ -3,17 +3,31 @@
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
   <Styles>
-    <Style ss:ID="header"><Font ss:Bold="1"/><Interior ss:Color="#D9E1F2" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="title"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="16" ss:Color="#0F766E"/></Style>
+    <Style ss:ID="subtitle"><Font ss:Color="#64748B"/></Style>
+    <Style ss:ID="header"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0F766E" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="text"><Alignment ss:Vertical="Center"/><Font/></Style>
+    <Style ss:ID="text_alt"><Alignment ss:Vertical="Center"/><Font/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="ok"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#15803D"/></Style>
+    <Style ss:ID="ok_alt"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#15803D"/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="ko"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#B91C1C"/></Style>
+    <Style ss:ID="ko_alt"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#B91C1C"/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="info"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#1D4ED8"/></Style>
+    <Style ss:ID="info_alt"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#1D4ED8"/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="warn"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#C2410C"/></Style>
+    <Style ss:ID="warn_alt"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#C2410C"/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
   </Styles>
   <Worksheet ss:Name="${sheetName}">
     <Table>
-      <#list headers as h><Column ss:AutoFitWidth="1" ss:Width="120"/></#list>
-      <Row>
+      <#list widths as w><Column ss:Width="${(w * 5.5)?c}"/></#list>
+      <Row ss:Height="26"><Cell ss:MergeAcross="${(headers?size - 1)?c}" ss:StyleID="title"><Data ss:Type="String">${title}</Data></Cell></Row>
+      <Row><Cell ss:MergeAcross="${(headers?size - 1)?c}" ss:StyleID="subtitle"><Data ss:Type="String">${sheetName}</Data></Cell></Row>
+      <Row ss:Height="20">
         <#list headers as h><Cell ss:StyleID="header"><Data ss:Type="String">${h}</Data></Cell></#list>
       </Row>
       <#list rows as row>
       <Row>
-        <#list row as cell><Cell><Data ss:Type="String">${cell}</Data></Cell></#list>
+        <#list row as cell><Cell ss:StyleID="${cell.s}"><Data ss:Type="String">${cell.v}</Data></Cell></#list>
       </Row>
       </#list>
     </Table>

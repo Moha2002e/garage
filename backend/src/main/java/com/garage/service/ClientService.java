@@ -102,6 +102,6 @@ public class ClientService {
 
     static ClientResponse toResponse(Client c) {
         return new ClientResponse(c.getId(), c.getLastName(), c.getFirstName(), c.getEmail(), c.getPhone(),
-                c.isActive());
+                c.isActive(), c.getCreatedAt());
     }
 }

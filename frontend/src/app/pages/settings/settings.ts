@@ -4,6 +4,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Button } from 'primeng/button';
 import { Select } from 'primeng/select';
 import { ToggleSwitch } from 'primeng/toggleswitch';
+import { PALETTES, PaletteId } from '../../core/palettes';
 import { LanguageSwitch } from '../../layout/language-switch';
 import { DATE_FORMATS } from '../../models/settings.model';
 import { AuthService } from '../../services/auth.service';
@@ -24,10 +25,15 @@ export class Settings {
   protected readonly auth = inject(AuthService);
 
   protected readonly dateFormats = DATE_FORMATS.map((f) => ({ id: f.id, label: f.angular.toUpperCase() }));
+  protected readonly palettes = PALETTES;
   protected readonly isExporting = signal(false);
 
   protected onThemeChange(isDark: boolean): void {
     this.settings.setTheme(isDark ? 'dark' : 'light');
+  }
+
+  protected onPaletteChange(id: PaletteId): void {
+    this.settings.setPalette(id);
   }
 
   /** Export réservé à l'ADMIN (le back-end refuse les autres rôles). */

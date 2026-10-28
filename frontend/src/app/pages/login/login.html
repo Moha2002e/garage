@@ -1,6 +1,7 @@
 <div class="auth-page">
   <p-card class="auth-card">
     <div class="lang-switch"><app-language-switch /></div>
+    <app-logo class="auth-logo" />
     <h1 class="auth-title">{{ 'login.title' | translate }}</h1>
 
     <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>

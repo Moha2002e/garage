@@ -23,6 +23,10 @@ export class ExportService {
     return this.download('appointments.xls');
   }
 
+  invoices(): Observable<Blob> {
+    return this.download('invoices.xls');
+  }
+
   // ******************************************
   // ************ PERSONNALISÉES ************
   // ******************************************

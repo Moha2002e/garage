@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { updatePreset } from '@primeuix/themes';
+import { Palette, PaletteId, paletteById, readStoredPaletteId, storePaletteId } from '../core/palettes';
 import { AppLang, DATE_FORMATS, DateFormatOption, ThemeMode } from '../models/settings.model';
 
 const THEME_KEY = 'garage.theme';
@@ -14,6 +16,9 @@ export class SettingsService {
   private readonly document = inject(DOCUMENT);
 
   readonly theme = signal<ThemeMode>(localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light');
+  // La palette mémorisée est déjà appliquée au démarrage (voir app.config.ts).
+  readonly paletteId = signal<PaletteId>(readStoredPaletteId());
+  readonly palette = computed<Palette>(() => paletteById(this.paletteId()));
   readonly language = signal<AppLang>(this.initialLanguage());
   readonly dateFormatId = signal<string>(this.initialDateFormatId());
   readonly dateFormat = computed<DateFormatOption>(
@@ -35,6 +40,14 @@ export class SettingsService {
     this.theme.set(mode);
     localStorage.setItem(THEME_KEY, mode);
     this.applyTheme(mode);
+  }
+
+  /** Change la couleur principale : le preset PrimeNG est mis à jour, toutes les variables CSS suivent. */
+  setPalette(id: PaletteId): void {
+    const palette = paletteById(id);
+    this.paletteId.set(palette.id);
+    storePaletteId(palette.id);
+    updatePreset({ semantic: { primary: palette.primary } });
   }
 
   /** Changement volontaire de l'utilisateur : on le mémorise. */

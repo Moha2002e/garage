@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Role } from '../models/auth.model';
 import { PageResponse } from '../models/page.model';
-import { UserAccount } from '../models/user.model';
+import { UserAccount, UserCreateRequest, UserUpdateRequest } from '../models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -27,8 +27,22 @@ export class UserService {
   }
 
   // ******************************************
+  // ************ POST ************
+  // ******************************************
+
+  /** Création d'un compte (ADMIN). Erreurs : 409 e-mail déjà utilisé, 400 règles du mot de passe. */
+  create(request: UserCreateRequest): Observable<UserAccount> {
+    return this.http.post<UserAccount>(this.url, request);
+  }
+
+  // ******************************************
   // ************ UPDATE ************
   // ******************************************
+
+  /** Nom, rôle et activation (ADMIN). La désactivation d'un compte passe par enabled à false. */
+  update(id: string, request: UserUpdateRequest): Observable<UserAccount> {
+    return this.http.put<UserAccount>(`${this.url}/${id}`, request);
+  }
 
   changeRole(id: string, role: Role): Observable<UserAccount> {
     return this.http.put<UserAccount>(`${this.url}/${id}/role`, { role });

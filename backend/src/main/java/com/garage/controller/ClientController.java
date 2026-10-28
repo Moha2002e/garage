@@ -3,6 +3,8 @@ package com.garage.controller;
 import com.garage.dto.ClientDtos.ClientRequest;
 import com.garage.dto.ClientDtos.ClientResponse;
 import com.garage.dto.PageResponse;
+import com.garage.dto.AppointmentDtos.AppointmentResponse;
+import com.garage.service.AppointmentService;
 import com.garage.service.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,9 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ClientController {
 
     private final ClientService clientService;
+    private final AppointmentService appointmentService;
 
-    public ClientController(ClientService clientService) {
+    public ClientController(ClientService clientService, AppointmentService appointmentService) {
         this.clientService = clientService;
+        this.appointmentService = appointmentService;
     }
 
     @GetMapping
@@ -46,6 +50,14 @@ public class ClientController {
     @Operation(summary = "Get a client")
     public ClientResponse get(@PathVariable UUID id) {
         return clientService.get(id);
+    }
+
+    @GetMapping("/{id}/appointments")
+    @Operation(summary = "Appointments of a client, newest first (page size 1 to 50, default 10)")
+    public PageResponse<AppointmentResponse> appointments(@PathVariable UUID id,
+                                                          @RequestParam(defaultValue = "0") int page,
+                                                          @RequestParam(defaultValue = "10") int size) {
+        return appointmentService.listByClient(id, page, size);
     }
 
     @PostMapping

@@ -10,4 +10,6 @@ public interface ClientRepository extends JpaRepository<Client, UUID>, JpaSpecif
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByEmailIgnoreCaseAndIdNot(String email, UUID id);
+
+    long countByActive(boolean active);
 }

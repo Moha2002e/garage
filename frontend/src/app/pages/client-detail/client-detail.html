@@ -1,0 +1,256 @@
+<section class="page">
+  <app-detail-header parentKey="menu.clients" parentRoute="/clients" [current]="name()" />
+
+  @if (isLoading()) {
+    <div class="detail-grid">
+      <div class="card"><p-skeleton width="40%" height="1.5rem" /><p-skeleton [style]="{ 'margin-top': '1rem' }" height="8rem" /></div>
+      <div class="card"><p-skeleton width="40%" height="1.5rem" /><p-skeleton [style]="{ 'margin-top': '1rem' }" height="8rem" /></div>
+    </div>
+  } @else if (loadFailed()) {
+    <div class="card state-card">
+      <i class="pi pi-exclamation-circle"></i>
+      <p>{{ 'clientDetail.notFound' | translate }}</p>
+      <p-button
+        icon="pi pi-refresh"
+        [label]="'common.retry' | translate"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="load()"
+      />
+    </div>
+  } @else if (client(); as client) {
+    <h1 class="page-title">{{ name() }}</h1>
+
+    <div class="detail-grid">
+      <div class="card">
+        <h2 class="card-title">{{ 'clientDetail.identity' | translate }}</h2>
+        <dl class="fact-sheet">
+          <dt>{{ 'fields.lastName' | translate }}</dt>
+          <dd>{{ client.lastName }}</dd>
+          <dt>{{ 'fields.firstName' | translate }}</dt>
+          <dd>{{ client.firstName }}</dd>
+          <dt>{{ 'fields.email' | translate }}</dt>
+          <dd>{{ client.email }}</dd>
+          <dt>{{ 'fields.phone' | translate }}</dt>
+          <dd>{{ client.phone }}</dd>
+          <dt>{{ 'fields.status' | translate }}</dt>
+          <dd>
+            <p-tag
+              [value]="(client.active ? 'clients.active' : 'clients.inactive') | translate"
+              [severity]="client.active ? 'success' : 'danger'"
+            />
+          </dd>
+        </dl>
+        <div class="card-actions">
+          @if (auth.canWrite()) {
+            <p-button icon="pi pi-pencil" [label]="'common.edit' | translate" (onClick)="startEdit()" />
+          }
+          @if (auth.isAdmin()) {
+            <p-button
+              [icon]="client.active ? 'pi pi-ban' : 'pi pi-replay'"
+              [label]="(client.active ? 'clients.deactivate' : 'clients.activate') | translate"
+              [severity]="client.active ? 'danger' : 'secondary'"
+              [outlined]="true"
+              (onClick)="startConfirm()"
+            />
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">{{ 'clients.vehicles' | translate }}</h2>
+        @if (vehiclesLoading()) {
+          <p-skeleton height="3.5rem" />
+        } @else if (vehicles().length) {
+          <ul class="vehicle-tiles">
+            @for (vehicle of vehicles(); track vehicle.id) {
+              <li>
+                <a class="vehicle-tile" [routerLink]="['/vehicles', vehicle.id]">
+                  <i class="pi pi-car"></i>
+                  <span class="vehicle-name">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                  <span class="vehicle-plate">{{ vehicle.plate }}</span>
+                  <p-tag
+                    class="vehicle-status"
+                    [value]="(vehicle.active ? 'vehicles.active' : 'vehicles.inactive') | translate"
+                    [severity]="vehicle.active ? 'success' : 'danger'"
+                  />
+                </a>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="muted">{{ 'clients.noVehicle' | translate }}</p>
+        }
+        @if (auth.canWrite()) {
+          <div class="card-actions">
+            <p-button
+              icon="pi pi-plus"
+              [label]="'clients.addVehicle' | translate"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="startAddVehicle()"
+            />
+          </div>
+        }
+      </div>
+    </div>
+
+    <h2 class="section-title">{{ 'clientDetail.appointments' | translate }}</h2>
+    <app-appointment-history [source]="appointmentsSource" [showVehicle]="true" />
+  }
+</section>
+
+<p-dialog
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [dismissableMask]="!hasUnsavedChanges()"
+  [closeOnEscape]="!hasUnsavedChanges()"
+  [style]="{ width: '36rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <span class="dialog-title">
+        @switch (mode()) {
+          @case ('addVehicle') {
+            {{ 'clients.addVehicle' | translate }}
+          }
+          @case ('confirm') {
+            {{ name() }}
+          }
+          @default {
+            {{ 'common.edit' | translate }}
+          }
+        }
+      </span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        (onClick)="requestClose()"
+      />
+    </div>
+  </ng-template>
+
+  @switch (mode()) {
+    @case ('confirm') {
+      <div class="confirm-view">
+        <i class="pi pi-exclamation-triangle confirm-icon"></i>
+        <p>
+          {{
+            (client()?.active ? 'clients.confirmDeactivate' : 'clients.confirmActivate')
+              | translate: { name: name() }
+          }}
+        </p>
+        <div class="dialog-actions">
+          <p-button
+            [label]="'common.confirm' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+            (onClick)="confirmToggleActive()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="dialogOpen.set(false)"
+          />
+        </div>
+      </div>
+    }
+
+    @case ('addVehicle') {
+      <form class="dialog-form" [formGroup]="vehicleForm" (ngSubmit)="saveVehicle()" novalidate>
+        <div class="field">
+          <label for="plate">{{ 'fields.plate' | translate }}</label>
+          <input pInputText id="plate" formControlName="plate" fluid />
+          @if (vehicleForm.controls.plate.touched && vehicleForm.controls.plate.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="brand">{{ 'fields.brand' | translate }}</label>
+          <input pInputText id="brand" formControlName="brand" fluid />
+          @if (vehicleForm.controls.brand.touched && vehicleForm.controls.brand.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="model">{{ 'fields.model' | translate }}</label>
+          <input pInputText id="model" formControlName="model" fluid />
+          @if (vehicleForm.controls.model.touched && vehicleForm.controls.model.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="requestClose()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+
+    @default {
+      <form class="dialog-form" [formGroup]="clientForm" (ngSubmit)="saveClient()" novalidate>
+        <div class="field">
+          <label for="lastName">{{ 'fields.lastName' | translate }}</label>
+          <input pInputText id="lastName" formControlName="lastName" fluid />
+          @if (clientForm.controls.lastName.touched && clientForm.controls.lastName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="firstName">{{ 'fields.firstName' | translate }}</label>
+          <input pInputText id="firstName" formControlName="firstName" fluid />
+          @if (clientForm.controls.firstName.touched && clientForm.controls.firstName.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="email">{{ 'fields.email' | translate }}</label>
+          <input pInputText id="email" type="email" formControlName="email" fluid />
+          @if (clientForm.controls.email.touched && clientForm.controls.email.errors) {
+            <small class="field-error">
+              {{ (clientForm.controls.email.errors['required'] ? 'validation.required' : 'validation.email') | translate }}
+            </small>
+          }
+        </div>
+        <div class="field">
+          <label for="phone">{{ 'fields.phone' | translate }}</label>
+          <input pInputText id="phone" formControlName="phone" fluid />
+          @if (clientForm.controls.phone.touched && clientForm.controls.phone.errors) {
+            <small class="field-error">{{ 'validation.phone' | translate }}</small>
+          }
+        </div>
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="requestClose()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+  }
+</p-dialog>

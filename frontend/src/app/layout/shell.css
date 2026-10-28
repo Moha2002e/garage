@@ -1,51 +1,47 @@
 .shell {
-  display: grid;
-  grid-template-columns: 17rem 1fr;
   min-height: 100vh;
 }
 
-.sidebar {
+/* Barre du haut : reste visible au défilement ; sur mobile, les entrées passent dans le menu hamburger. */
+.topbar {
   position: sticky;
   top: 0;
-  height: 100vh;
-  box-sizing: border-box;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.25rem 1rem;
+  z-index: 100;
   background: var(--p-content-background);
-  border-right: 1px solid var(--p-content-border-color);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+:host ::ng-deep .topbar-menu.p-menubar {
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 1rem;
+  gap: 1rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 0.5rem;
-  font-size: 1.375rem;
+  margin-right: 1rem;
+  color: var(--p-text-color);
+  text-decoration: none;
+  font-size: 1.25rem;
   font-weight: 700;
 }
 
 .brand-logo {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   flex: none;
 }
 
-/* Entrées du menu : dimensions fixes, seules les couleurs changent (pas de scale, de bordure ni de padding variable). */
-.menu {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
+/* Entrées : dimensions fixes, seules les couleurs changent (pas de scale, de bordure ni de padding variable). */
 .menu-item {
   box-sizing: border-box;
-  height: 2.75rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
   padding: 0 0.75rem;
   border: 1px solid transparent;
   border-radius: var(--p-content-border-radius);
@@ -63,15 +59,13 @@
   width: 1.25rem;
   flex: none;
   text-align: center;
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   color: var(--p-text-muted-color);
 }
 
 .menu-label {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -79,7 +73,6 @@
   background: var(--p-content-hover-background);
 }
 
-/* Le focus clavier se voit par un anneau intérieur : la taille de l'entrée ne bouge pas. */
 .menu-item:focus-visible {
   box-shadow: inset 0 0 0 2px var(--p-primary-color);
 }
@@ -106,41 +99,52 @@
   background: var(--p-primary-color);
 }
 
-.sidebar-footer {
-  margin-top: auto;
+.topbar-end {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.75rem;
 }
 
 .user {
   display: flex;
   flex-direction: column;
-  overflow-wrap: anywhere;
+  text-align: right;
+  line-height: 1.2;
 }
 
 .user small {
   color: var(--p-text-muted-color);
 }
 
+.logout-icon {
+  display: none;
+}
+
 .content {
   min-width: 0;
 }
 
-/* Sur petit écran, le menu passe au-dessus de la page. */
-@media (max-width: 768px) {
-  .shell {
-    grid-template-columns: 1fr;
+/* Téléphone : la barre reste fine (logo, langue, déconnexion en icône) ; le nom se cache. */
+@media (max-width: 1100px) {
+  .user {
+    display: none;
   }
 
-  .sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--p-content-border-color);
+  .logout-label {
+    display: none;
   }
 
-  .sidebar-footer {
-    margin-top: 0;
+  .logout-icon {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand span {
+    display: none;
+  }
+
+  :host ::ng-deep .topbar-menu.p-menubar {
+    padding: 0.5rem;
   }
 }

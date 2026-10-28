@@ -1,7 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MenuItem } from 'primeng/api';
 import { Button } from 'primeng/button';
+import { Menubar } from 'primeng/menubar';
+import { merge, startWith } from 'rxjs';
 import { Role } from '../models/auth.model';
 import { AuthService } from '../services/auth.service';
 import { AppLogo } from './app-logo';
@@ -25,21 +29,31 @@ const ENTRIES: MenuEntry[] = [
   { key: 'menu.settings', icon: 'pi pi-cog', route: '/settings' }
 ];
 
-/** Coque des pages privées : menu latéral qui dépend du rôle, puis la page demandée. */
+/** Coque des pages privées : barre de navigation PrimeNG (hamburger sur mobile) qui dépend du rôle, puis la page demandée. */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, Button, LanguageSwitch, AppLogo],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, TranslatePipe, Button, Menubar, LanguageSwitch, AppLogo],
   templateUrl: './shell.html',
   styleUrl: './shell.css'
 })
 export class Shell {
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  // Change à chaque (re)chargement de traduction ou changement de langue, pour recalculer les libellés.
+  private readonly translations = toSignal(
+    merge(this.translate.onLangChange, this.translate.onTranslationChange).pipe(startWith(null))
+  );
   protected readonly auth = inject(AuthService);
 
   // Les options non autorisées ne s'affichent pas.
-  protected readonly entries = computed(() => {
+  protected readonly items = computed<MenuItem[]>(() => {
+    this.translations();
     const role = this.auth.role();
-    return ENTRIES.filter((e) => !e.roles || (role !== null && e.roles.includes(role)));
+    return ENTRIES.filter((e) => !e.roles || (role !== null && e.roles.includes(role))).map((e) => ({
+      label: this.translate.instant(e.key),
+      icon: e.icon,
+      routerLink: e.route
+    }));
   });
 
   protected onLogout(): void {

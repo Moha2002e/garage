@@ -1,43 +1,56 @@
 <div class="shell">
-  <aside class="sidebar">
-    <div class="brand">
-      <app-logo class="brand-logo" />
-      <span>Garage</span>
-    </div>
+  <header class="topbar">
+    <p-menubar [model]="items()" [breakpoint]="'1100px'" styleClass="topbar-menu">
+      <ng-template #start>
+        <a class="brand" routerLink="/" [attr.aria-label]="'Garage'">
+          <app-logo class="brand-logo" />
+          <span>Garage</span>
+        </a>
+      </ng-template>
 
-    <nav class="menu" aria-label="Menu">
-      @for (entry of entries(); track entry.route) {
+      <ng-template #item let-item>
         <a
           class="menu-item"
-          [routerLink]="entry.route"
+          [routerLink]="item.routerLink"
           routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
         >
-          <i [class]="entry.icon"></i>
-          <span class="menu-label">{{ entry.key | translate }}</span>
+          <i [class]="item.icon"></i>
+          <span class="menu-label">{{ item.label }}</span>
           <span class="menu-dot" aria-hidden="true"></span>
         </a>
-      }
-    </nav>
+      </ng-template>
 
-    <div class="sidebar-footer">
-      @if (auth.user(); as user) {
-        <div class="user">
-          <strong>{{ user.firstName }} {{ user.lastName }}</strong>
-          <small>{{ 'roles.' + user.role | translate }}</small>
+      <ng-template #end>
+        <div class="topbar-end">
+          @if (auth.user(); as user) {
+            <div class="user">
+              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+              <small>{{ 'roles.' + user.role | translate }}</small>
+            </div>
+          }
+          <app-language-switch />
+          <p-button
+            class="logout-label"
+            [label]="'menu.logout' | translate"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="onLogout()"
+          />
+          <p-button
+            class="logout-icon"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            [outlined]="true"
+            [rounded]="true"
+            [ariaLabel]="'menu.logout' | translate"
+            (onClick)="onLogout()"
+          />
         </div>
-      }
-      <app-language-switch />
-      <p-button
-        [label]="'menu.logout' | translate"
-        icon="pi pi-sign-out"
-        severity="secondary"
-        [outlined]="true"
-        (onClick)="onLogout()"
-        fluid
-      />
-    </div>
-  </aside>
+      </ng-template>
+    </p-menubar>
+  </header>
 
   <main class="content">
     <router-outlet />

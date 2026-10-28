@@ -12,10 +12,15 @@ import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /** Reads the JWT from the HttpOnly cookie and authenticates the request. Not a Spring bean (registered in SecurityConfig only). */
 public class JwtAuthFilter extends OncePerRequestFilter {
+
+    private static final SecurityContextRepository CONTEXT_REPOSITORY = new RequestAttributeSecurityContextRepository();
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -40,7 +45,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 user.getClient() == null ? null : user.getClient().getId());
                         var auth = new UsernamePasswordAuthenticationToken(principal, null,
                                 List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
-                        SecurityContextHolder.getContext().setAuthentication(auth);
+                        SecurityContext context = SecurityContextHolder.createEmptyContext();
+                        context.setAuthentication(auth);
+                        SecurityContextHolder.setContext(context);
+                        // Declare the context to Spring Security (request scope, stateless). Without this,
+                        // SessionManagementFilter treats every request as a new login and its CSRF strategy
+                        // deletes the XSRF-TOKEN cookie, so one request out of two was refused with a 401.
+                        CONTEXT_REPOSITORY.saveContext(context, request, response);
                     });
         }
         chain.doFilter(request, response);

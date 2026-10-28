@@ -13,16 +13,19 @@ tags: [garage, spring-boot, angular, securite, csrf, responsive]
 
 **Diagnostic** (reproduit en envoyant 4 `PATCH /api/appointments/{id}/reschedule` de suite) : réponses 200, 401, 200, 401. Après chaque requête réussie, le cookie `XSRF-TOKEN` avait disparu du navigateur. La requête suivante partait donc sans l'en-tête `X-XSRF-TOKEN` et Spring Security la refusait (401). Cette réponse 401 reposait le cookie, d'où l'alternance.
 
-**Cause** : l'authentification se fait par un filtre JWT maison (`JwtAuthFilter`) qui mettait l'utilisateur dans le `SecurityContextHolder` sans le déclarer au dépôt de contexte de Spring Security. `SessionManagementFilter` croyait alors à une nouvelle connexion à chaque requête et appliquait sa stratégie CSRF, qui **supprime le cookie CSRF** quand la requête en porte un.
+**Cause** : le back-end authentifie chaque requête lui-même avec un filtre JWT (`JwtAuthFilter`), sans session. Avec Spring Security 6, chaque requête authentifiée est traitée comme une nouvelle connexion, et la stratégie CSRF par défaut (`CsrfAuthenticationStrategy`) **supprime le cookie `XSRF-TOKEN`** quand la requête en porte un. Constaté avec `cookieStore` dans le navigateur : un événement `DEL` après chaque requête qui envoyait le cookie, un `SET` après la suivante. Même un simple GET provoquait l'alternance.
 
-**Correction** : dans `JwtAuthFilter`, après avoir créé l'authentification, enregistrer le contexte dans la requête (`RequestAttributeSecurityContextRepository.saveContext`). Spring voit alors le contexte comme déjà connu et ne touche plus au cookie.
+**Correction** : dans `SecurityConfig`, `csrf(...).sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())`. Le cookie reste en place.
+
+**Première tentative inutile** : déclarer le contexte dans la requête (`RequestAttributeSecurityContextRepository.saveContext`) n'a rien changé, car en mode stateless le filtre de session de Spring utilise un dépôt nul dont `containsContext` est toujours faux. Annulée.
 
 **À retenir** :
-- Un filtre d'authentification maison doit déclarer son contexte (`saveContext`) ; mettre l'utilisateur dans le `SecurityContextHolder` ne suffit pas.
+- Avec un filtre JWT maison en stateless sous Spring Security 6, neutraliser la stratégie CSRF de session (`NullAuthenticatedSessionStrategy`), sinon le cookie CSRF est effacé à chaque requête.
+- Pour diagnostiquer un cookie qui disparaît : écouter `cookieStore.addEventListener('change', ...)` dans la console du navigateur.
 - En JWT + cookie CSRF, un 401 sur une requête qui modifie des données peut venir d'un jeton CSRF absent, pas d'une session expirée.
 - Tout message « Une erreur est survenue » avec retour à la connexion venait de ce 401 : l'intercepteur front traite tout 401 comme « session expirée ».
 
-Fichier : `backend/src/main/java/com/garage/security/JwtAuthFilter.java`.
+Fichier : `backend/src/main/java/com/garage/config/SecurityConfig.java`.
 
 ## 2. Menu non adapté au téléphone
 

@@ -43,6 +43,8 @@ Render > New > Web Service > ton dépôt GitHub.
 
 Optionnelles : `GARAGE_COMPANY_*` (en-tête des factures PDF), `INVOICE_VAT_RATE`, `GARAGE_CAPACITY`, `MAIL_FROM`.
 
+Attention : Render ajoute un suffixe au nom de la base que tu demandes (ex. `garage` devient `garage_xxxx`). Copie le nom exact affiché dans la page de la base, section Connections, champ Database.
+
 Attention : Render fournit l'URL de la base au format `postgres://...`, que Java ne comprend pas. Il faut écrire `DB_URL` en `jdbc:postgresql://...` et mettre l'utilisateur et le mot de passe dans `DB_USER` et `DB_PASSWORD`.
 
 ## 4. Premier démarrage

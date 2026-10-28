@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REMPLACE-PAR-TON-SERVICE.onrender.com/api/:path*"
+      "destination": "https://garage-backend-qkng.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

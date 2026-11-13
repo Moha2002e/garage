@@ -36,6 +36,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import com.garage.mapper.AppointmentMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -51,6 +53,8 @@ class AppointmentServiceTest {
     @Mock VehicleService vehicleService;
     @Mock CurrentUser currentUser;
 
+    @Mock QuoteStockService quoteStockService;
+
     AppointmentService service;
     Client client;
     Vehicle vehicle;
@@ -60,7 +64,7 @@ class AppointmentServiceTest {
         AppProperties props = new AppProperties(null, null, null, null, null, 0, 0, null,
                 new AppProperties.Garage(2, null), null);
         service = new AppointmentService(appointmentRepository, quoteRepository, clientService, vehicleService,
-                currentUser, props);
+                currentUser, props, Mappers.getMapper(AppointmentMapper.class), quoteStockService);
         client = new Client();
         client.setId(UUID.randomUUID());
         client.setActive(true);
@@ -533,6 +537,23 @@ class AppointmentServiceTest {
         when(appointmentRepository.findByDateGreaterThanEqualAndDateLessThanOrderByDateAsc(any(), any()))
                 .thenReturn(many);
         assertEquals(2000, service.calendar(from, from.plus(7, ChronoUnit.DAYS)).size());
+    }
+
+    @Test
+    void cancellingReleasesTheStockOfItsQuote() {
+        Appointment appointment = existing(AppointmentStatus.PLANNED);
+        com.garage.domain.Quote quote = new com.garage.domain.Quote();
+        quote.setAppointment(appointment);
+        when(quoteRepository.findWithLinesByAppointmentId(appointment.getId())).thenReturn(Optional.of(quote));
+        service.changeStatus(appointment.getId(), AppointmentStatus.CANCELLED);
+        verify(quoteStockService).releaseAll(eq(quote), any());
+    }
+
+    @Test
+    void otherStatusChangesNeverTouchTheStock() {
+        Appointment appointment = existing(AppointmentStatus.PLANNED);
+        service.changeStatus(appointment.getId(), AppointmentStatus.IN_PROGRESS);
+        verify(quoteStockService, never()).releaseAll(any(), any());
     }
 
     private Appointment existing(AppointmentStatus status) {

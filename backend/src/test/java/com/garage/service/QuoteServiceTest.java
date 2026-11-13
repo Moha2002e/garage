@@ -28,6 +28,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import com.garage.mapper.QuoteMapper;
+import org.mapstruct.factory.Mappers;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -35,13 +37,15 @@ class QuoteServiceTest {
 
     @Mock QuoteRepository quoteRepository;
     @Mock AppointmentService appointmentService;
+    @Mock PartService partService;
 
     QuoteService service;
     Appointment appointment;
 
     @BeforeEach
     void setUp() {
-        service = new QuoteService(quoteRepository, appointmentService);
+        service = new QuoteService(quoteRepository, appointmentService, Mappers.getMapper(QuoteMapper.class),
+                partService, new QuoteStockService(partService));
         appointment = new Appointment();
         appointment.setId(UUID.randomUUID());
         appointment.setStatus(AppointmentStatus.PLANNED);
@@ -51,7 +55,7 @@ class QuoteServiceTest {
     }
 
     private static QuoteLineRequest line(String description, String quantity, String unitPrice) {
-        return new QuoteLineRequest(description, new BigDecimal(quantity), new BigDecimal(unitPrice));
+        return new QuoteLineRequest(null, description, new BigDecimal(quantity), new BigDecimal(unitPrice));
     }
 
     private Quote existingQuote(QuoteStatus status) {
@@ -164,5 +168,128 @@ class QuoteServiceTest {
         UUID other = UUID.randomUUID();
         when(appointmentService.findAccessible(other)).thenThrow(new NotFoundException("Appointment not found"));
         assertThrows(NotFoundException.class, () -> service.get(other));
+    }
+
+    // ---------- stock reservation ----------
+
+    private com.garage.domain.Part part() {
+        var part = new com.garage.domain.Part();
+        part.setId(UUID.randomUUID());
+        part.setReference("BRK-001");
+        when(partService.find(part.getId())).thenReturn(part);
+        return part;
+    }
+
+    private static QuoteLineRequest partLine(UUID partId, String quantity) {
+        return new QuoteLineRequest(partId, "Plaquettes", new BigDecimal(quantity), new BigDecimal("45"));
+    }
+
+    private QuoteLine partLineOf(Quote quote, com.garage.domain.Part part, String quantity) {
+        QuoteLine existing = new QuoteLine();
+        existing.setQuote(quote);
+        existing.setPart(part);
+        existing.setDescription("Plaquettes");
+        existing.setQuantity(new BigDecimal(quantity));
+        existing.setUnitPrice(BigDecimal.TEN);
+        quote.getLines().add(existing);
+        return existing;
+    }
+
+    @Test
+    void partLineReservesItsQuantity() {
+        var part = part();
+        var response = service.replaceLines(appointment.getId(),
+                new QuoteRequest(List.of(partLine(part.getId(), "2"), line("Labour", "1.5", "60"))));
+        org.mockito.Mockito.verify(partService).reserve(org.mockito.ArgumentMatchers.eq(part.getId()), org.mockito.ArgumentMatchers.eq(2), org.mockito.ArgumentMatchers.anyString());
+        assertEquals(part.getId(), response.lines().get(0).partId());
+        assertEquals("BRK-001", response.lines().get(0).partReference());
+        assertEquals(null, response.lines().get(1).partId());
+    }
+
+    @Test
+    void labourLinesNeverTouchTheStock() {
+        service.replaceLines(appointment.getId(), new QuoteRequest(List.of(line("Labour", "1.5", "60"))));
+        org.mockito.Mockito.verify(partService, org.mockito.Mockito.never()).reserve(any(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
+    @Test
+    void partQuantityMustBeWhole() {
+        var part = part();
+        assertThrows(BusinessException.class, () -> service.replaceLines(appointment.getId(),
+                new QuoteRequest(List.of(partLine(part.getId(), "1.5")))));
+    }
+
+    @Test
+    void unknownPartIsRefused() {
+        UUID unknown = UUID.randomUUID();
+        when(partService.find(unknown)).thenThrow(new NotFoundException("Part not found"));
+        assertThrows(NotFoundException.class, () -> service.replaceLines(appointment.getId(),
+                new QuoteRequest(List.of(partLine(unknown, "1")))));
+    }
+
+    @Test
+    void missingStockFailsTheWholeSave() {
+        var part = part();
+        org.mockito.Mockito.doThrow(new BusinessException("Not enough stock")).when(partService)
+                .reserve(any(), org.mockito.ArgumentMatchers.anyInt(), any());
+        assertThrows(BusinessException.class, () -> service.replaceLines(appointment.getId(),
+                new QuoteRequest(List.of(partLine(part.getId(), "99")))));
+        org.mockito.Mockito.verify(quoteRepository, org.mockito.Mockito.never()).saveAndFlush(any());
+    }
+
+    @Test
+    void increasingTheQuantityReservesOnlyTheDifference() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "2");
+        service.replaceLines(appointment.getId(), new QuoteRequest(List.of(partLine(part.getId(), "5"))));
+        org.mockito.Mockito.verify(partService).reserve(org.mockito.ArgumentMatchers.eq(part.getId()), org.mockito.ArgumentMatchers.eq(3), org.mockito.ArgumentMatchers.anyString());
+        org.mockito.Mockito.verify(partService, org.mockito.Mockito.never()).release(any(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
+    @Test
+    void removingAPartLineGivesTheStockBack() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "2");
+        service.replaceLines(appointment.getId(), new QuoteRequest(List.of(line("Labour", "1", "60"))));
+        org.mockito.Mockito.verify(partService).release(org.mockito.ArgumentMatchers.eq(part.getId()), org.mockito.ArgumentMatchers.eq(2), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void sameQuantityTouchesNothing() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "2");
+        service.replaceLines(appointment.getId(), new QuoteRequest(List.of(partLine(part.getId(), "2"))));
+        org.mockito.Mockito.verifyNoMoreInteractions(org.mockito.Mockito.ignoreStubs(partService));
+    }
+
+    @Test
+    void refusingTheQuoteGivesTheStockBack() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "3");
+        service.changeStatus(appointment.getId(), QuoteStatus.REFUSED);
+        org.mockito.Mockito.verify(partService).release(org.mockito.ArgumentMatchers.eq(part.getId()), org.mockito.ArgumentMatchers.eq(3), org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void acceptingTheQuoteKeepsTheStockReserved() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "3");
+        service.changeStatus(appointment.getId(), QuoteStatus.ACCEPTED);
+        org.mockito.Mockito.verify(partService, org.mockito.Mockito.never()).release(any(), org.mockito.ArgumentMatchers.anyInt(), any());
+    }
+
+    @Test
+    void refusingTheQuoteOfACancelledAppointmentDoesNotReleaseTwice() {
+        var part = part();
+        Quote quote = existingQuote(QuoteStatus.DRAFT);
+        partLineOf(quote, part, "3");
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        service.changeStatus(appointment.getId(), QuoteStatus.REFUSED);
+        org.mockito.Mockito.verify(partService, org.mockito.Mockito.never()).release(any(), org.mockito.ArgumentMatchers.anyInt(), any());
     }
 }

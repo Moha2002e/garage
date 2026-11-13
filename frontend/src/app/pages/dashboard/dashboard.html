@@ -32,6 +32,18 @@
         (onClick)="goInvoices('ISSUED')"
       />
     </p-card>
+    <p-card>
+      <div class="stat-label">{{ 'dashboard.lowStockParts' | translate }}</div>
+      <div class="stat-value">{{ lowStockParts() }}</div>
+      <p-button
+        class="stat-link"
+        [label]="'dashboard.seeParts' | translate"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="goParts()"
+      />
+    </p-card>
     @for (card of cards(); track card.key) {
       <p-card>
         <div class="stat-label">{{ card.key | translate }}</div>

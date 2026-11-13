@@ -20,11 +20,33 @@ import { apiInterceptor } from './core/http.interceptor';
 import { AuthService } from './services/auth.service';
 import { SettingsService } from './services/settings.service';
 
-// Palette sobre : gris ardoise pour les surfaces (Aura) et une couleur principale au choix (teal par défaut).
+// Surfaces neutres chaudes (ivoire en clair, charbon en sombre) : elles s'accordent à l'or du logo.
+const WARM_SURFACE = {
+  0: '#ffffff',
+  50: '#faf9f6',
+  100: '#f4f1ea',
+  200: '#e8e3d8',
+  300: '#d6cfc0',
+  400: '#a79f8e',
+  500: '#7a7364',
+  600: '#5b5547',
+  700: '#403b30',
+  800: '#2a2620',
+  900: '#1c1915',
+  950: '#121110'
+};
+
+// Style luxe : or champagne par défaut (couleur principale au choix), surfaces chaudes, angles peu arrondis.
 // La palette mémorisée est lue ici pour éviter un flash de la couleur par défaut au démarrage.
 const GaragePreset = definePreset(Aura, {
   semantic: {
-    primary: paletteById(readStoredPaletteId()).primary
+    primary: paletteById(readStoredPaletteId()).primary,
+    content: { borderRadius: '{border.radius.sm}' },
+    formField: { borderRadius: '{border.radius.sm}' },
+    colorScheme: {
+      light: { surface: WARM_SURFACE },
+      dark: { surface: WARM_SURFACE }
+    }
   }
 });
 

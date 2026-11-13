@@ -20,7 +20,7 @@ public final class AuthDtos {
 
     public record RegisterRequest(
             @NotBlank @Email @Size(max = 255) String email,
-            @NotBlank @Size(min = 8, max = 72) String password,
+            @NotBlank @Size(min = 12, max = 72) String password,
             @NotBlank @Size(max = 100) String firstName,
             @NotBlank @Size(max = 100) String lastName,
             Language language) {
@@ -31,7 +31,7 @@ public final class AuthDtos {
 
     public record ResetPasswordRequest(
             @NotBlank @Size(max = 200) String token,
-            @NotBlank @Size(min = 8, max = 72) String newPassword) {
+            @NotBlank @Size(min = 12, max = 72) String newPassword) {
     }
 
     /** clientLinked tells the front-end whether a CLIENT account is attached to a client record yet. */

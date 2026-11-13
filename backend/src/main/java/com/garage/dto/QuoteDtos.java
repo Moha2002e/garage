@@ -18,7 +18,9 @@ public final class QuoteDtos {
     private QuoteDtos() {
     }
 
+    /** partId set = catalogue part (whole quantity, reserves stock); empty = labour or free text. */
     public record QuoteLineRequest(
+            UUID partId,
             @NotBlank @Size(max = 255) String description,
             @NotNull @DecimalMin(value = "0", inclusive = false) @Digits(integer = 8, fraction = 2) BigDecimal quantity,
             @NotNull @DecimalMin("0") @Digits(integer = 10, fraction = 2) BigDecimal unitPrice) {
@@ -32,8 +34,8 @@ public final class QuoteDtos {
     public record QuoteStatusRequest(@NotNull QuoteStatus status) {
     }
 
-    public record QuoteLineResponse(UUID id, String description, BigDecimal quantity, BigDecimal unitPrice,
-                                    BigDecimal lineTotal) {
+    public record QuoteLineResponse(UUID id, UUID partId, String partReference, String description,
+                                    BigDecimal quantity, BigDecimal unitPrice, BigDecimal lineTotal) {
     }
 
     public record QuoteResponse(UUID id, UUID appointmentId, QuoteStatus status, List<QuoteLineResponse> lines,

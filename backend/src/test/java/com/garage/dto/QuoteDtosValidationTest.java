@@ -18,7 +18,7 @@ class QuoteDtosValidationTest {
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     private static QuoteLineRequest line(String description, String quantity, String unitPrice) {
-        return new QuoteLineRequest(description, new BigDecimal(quantity), new BigDecimal(unitPrice));
+        return new QuoteLineRequest(null, description, new BigDecimal(quantity), new BigDecimal(unitPrice));
     }
 
     @Test

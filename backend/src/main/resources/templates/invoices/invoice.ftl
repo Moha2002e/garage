@@ -13,35 +13,35 @@
 body { font-family: Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #1F2937; margin: 0; padding: 0; }
 table { border-collapse: collapse; width: 100%; }
 td, th { vertical-align: top; padding: 0; }
-.teal { color: #0F766E; }
-.muted { color: #64748B; }
+.gold { color: #8F6A1F; }
+.muted { color: #6B665B; }
 .small { font-size: 8.5pt; }
 .right { text-align: right; }
-.header { border-bottom: 2px solid #0F766E; padding-bottom: 10px; }
+.header { border-bottom: 2px solid #B8913F; padding-bottom: 10px; }
 .logo { width: 46px; height: 46px; }
-.logobox { width: 46px; height: 46px; background-color: #0F766E; color: #FFFFFF; font-size: 24pt; font-weight: bold; text-align: center; line-height: 46px; }
-.company { font-size: 14pt; font-weight: bold; color: #0F766E; }
-.title { font-size: 26pt; font-weight: bold; color: #0F766E; letter-spacing: 1px; }
-.number { font-size: 12pt; font-weight: bold; margin-top: 2px; }
-.label { font-size: 7.5pt; font-weight: bold; color: #0F766E; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+.logobox { width: 46px; height: 46px; background-color: #171614; color: #D9A93F; font-size: 24pt; font-weight: bold; text-align: center; line-height: 46px; }
+.company { font-family: 'Times New Roman', Times, serif; font-size: 15pt; font-weight: bold; color: #171614; letter-spacing: 2px; text-transform: uppercase; }
+.title { font-family: 'Times New Roman', Times, serif; font-size: 26pt; font-weight: bold; color: #171614; letter-spacing: 4px; }
+.number { font-size: 12pt; font-weight: bold; margin-top: 2px; color: #8F6A1F; }
+.label { font-size: 7.5pt; font-weight: bold; color: #8F6A1F; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
 .value { font-size: 10.5pt; font-weight: bold; }
-.box { border: 1px solid #D5E3E2; padding: 8px 10px; margin-bottom: 8px; }
-.meta td { padding: 3px 0; border-bottom: 1px solid #E5ECEB; }
-.meta .k { color: #64748B; width: 45%; }
+.box { border: 1px solid #E5DFD0; padding: 8px 10px; margin-bottom: 8px; }
+.meta td { padding: 3px 0; border-bottom: 1px solid #EAE4D6; }
+.meta .k { color: #6B665B; width: 45%; }
 .meta .v { text-align: right; font-weight: bold; }
 .lines { margin-top: 18px; }
-.lines th { background-color: #0F766E; color: #FFFFFF; font-size: 8.5pt; text-align: left; padding: 6px 8px; }
-.lines td { padding: 6px 8px; border-bottom: 1px solid #E5ECEB; }
+.lines th { background-color: #171614; color: #D9A93F; font-size: 8.5pt; text-align: left; padding: 6px 8px; }
+.lines td { padding: 6px 8px; border-bottom: 1px solid #EAE4D6; }
 .lines .num { text-align: right; }
-.row-even td { background-color: #F1F5F5; }
+.row-even td { background-color: #F8F5EE; }
 .totals td { padding: 4px 8px; }
-.totals .grand td { background-color: #0F766E; color: #FFFFFF; font-weight: bold; font-size: 11pt; padding: 7px 8px; }
-.pay { margin-top: 20px; padding: 10px 12px; border: 1px solid #D5E3E2; page-break-inside: avoid; }
+.totals .grand td { background-color: #171614; color: #D9A93F; font-weight: bold; font-size: 11pt; padding: 7px 8px; }
+.pay { margin-top: 20px; padding: 10px 12px; border: 1px solid #E5DFD0; page-break-inside: avoid; }
 .paid { border: 1px solid #15803D; background-color: #F0FDF4; color: #15803D; font-size: 13pt; font-weight: bold; }
 .due { font-size: 12pt; font-weight: bold; margin-bottom: 6px; }
 .pay td { padding: 2px 0; }
-.pay .k { width: 28%; color: #64748B; }
-#footer { position: running(footer); text-align: center; font-size: 8pt; color: #64748B; border-top: 1px solid #D5E3E2; padding-top: 6px; }
+.pay .k { width: 28%; color: #6B665B; }
+#footer { position: running(footer); text-align: center; font-size: 8pt; color: #6B665B; border-top: 1px solid #B8913F; padding-top: 6px; }
 </style>
 </head>
 <body>

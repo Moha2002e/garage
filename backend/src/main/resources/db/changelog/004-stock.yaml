@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-parts
+      author: garage
+      changes:
+        - createTable:
+            tableName: parts
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: reference, type: varchar(40), constraints: { nullable: false, unique: true, uniqueConstraintName: uq_parts_reference } }
+              - column: { name: name, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: unit_price, type: "numeric(12,2)", constraints: { nullable: false } }
+              - column: { name: quantity_in_stock, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: low_stock_threshold, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: version, type: bigint, defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 014-stock-movements
+      author: garage
+      changes:
+        - createTable:
+            tableName: stock_movements
+            columns:
+              - column: { name: id, type: uuid, constraints: { primaryKey: true, nullable: false } }
+              - column: { name: part_id, type: uuid, constraints: { nullable: false, foreignKeyName: fk_stock_movements_part, references: parts(id) } }
+              # IN, OUT or ADJUSTMENT.
+              - column: { name: type, type: varchar(20), constraints: { nullable: false } }
+              - column: { name: quantity, type: integer, constraints: { nullable: false } }
+              - column: { name: reason, type: varchar(255) }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        - createIndex:
+            tableName: stock_movements
+            indexName: idx_stock_movements_part
+            columns:
+              - column: { name: part_id }
+
+  - changeSet:
+      id: 015-part-lead-time-and-quote-link
+      author: garage
+      changes:
+        # Supplier delivery time in days (0 = unknown), shown when the stock is too low.
+        - addColumn:
+            tableName: parts
+            columns:
+              - column: { name: lead_time_days, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+        # A quote line is either a catalogue part (part_id set) or labour / free text (part_id empty).
+        - addColumn:
+            tableName: quote_lines
+            columns:
+              - column: { name: part_id, type: uuid, constraints: { nullable: true, foreignKeyName: fk_quote_lines_part, references: parts(id) } }
+        - createIndex:
+            tableName: quote_lines
+            indexName: idx_quote_lines_part
+            columns:
+              - column: { name: part_id }
+
+  - changeSet:
+      id: 016-token-version
+      author: garage
+      changes:
+        # Incremented to invalidate every JWT issued before this value (logout-everywhere / password change).
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: token_version, type: bigint, defaultValueNumeric: 0, constraints: { nullable: false } }

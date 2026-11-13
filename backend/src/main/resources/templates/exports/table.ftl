@@ -3,9 +3,9 @@
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
   <Styles>
-    <Style ss:ID="title"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="16" ss:Color="#0F766E"/></Style>
+    <Style ss:ID="title"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Size="16" ss:Color="#8F6A1F"/></Style>
     <Style ss:ID="subtitle"><Font ss:Color="#64748B"/></Style>
-    <Style ss:ID="header"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0F766E" ss:Pattern="Solid"/></Style>
+    <Style ss:ID="header"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#D9A93F"/><Interior ss:Color="#171614" ss:Pattern="Solid"/></Style>
     <Style ss:ID="text"><Alignment ss:Vertical="Center"/><Font/></Style>
     <Style ss:ID="text_alt"><Alignment ss:Vertical="Center"/><Font/><Interior ss:Color="#F1F5F5" ss:Pattern="Solid"/></Style>
     <Style ss:ID="ok"><Alignment ss:Vertical="Center"/><Font ss:Bold="1" ss:Color="#15803D"/></Style>

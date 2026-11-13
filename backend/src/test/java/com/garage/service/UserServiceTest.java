@@ -31,6 +31,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import com.garage.mapper.UserMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,7 +50,8 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new UserService(userRepository, clientRepository, currentUser, passwordEncoder);
+        service = new UserService(userRepository, clientRepository, currentUser, passwordEncoder,
+                Mappers.getMapper(UserMapper.class));
         adminId = UUID.randomUUID();
         when(currentUser.get()).thenReturn(new AuthUser(adminId, "admin@garage.test", Role.ADMIN, null));
         when(passwordEncoder.encode(any())).thenAnswer(i -> "hash:" + i.getArgument(0));

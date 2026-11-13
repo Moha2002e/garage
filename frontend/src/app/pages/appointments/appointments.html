@@ -151,7 +151,12 @@
             </ng-template>
             <ng-template #body let-line>
               <tr>
-                <td>{{ line.description }}</td>
+                <td>
+                  {{ line.description }}
+                  @if (line.partReference) {
+                    <p-tag [value]="line.partReference" severity="secondary" />
+                  }
+                </td>
                 <td>{{ line.quantity }}</td>
                 <td>{{ money(line.unitPrice) }}</td>
                 <td>{{ money(line.lineTotal) }}</td>
@@ -286,6 +291,25 @@
           @for (line of lines.controls; track line; let i = $index) {
             <div class="quote-line" [formGroupName]="i">
               <div class="field">
+                <label [for]="'line-part-' + i">{{ 'quote.part' | translate }}</label>
+                <p-autocomplete
+                  [inputId]="'line-part-' + i"
+                  formControlName="part"
+                  [suggestions]="partSuggestions()"
+                  [optionLabel]="partLabel"
+                  [forceSelection]="true"
+                  [dropdown]="true"
+                  [showClear]="true"
+                  [placeholder]="'quote.partPlaceholder' | translate"
+                  (completeMethod)="searchParts($event)"
+                  (onSelect)="onPartSelected(line, $event.value)"
+                  fluid
+                />
+                @if (line.controls.part.value?.quantityInStock !== undefined && line.controls.part.value) {
+                  <small class="muted">{{ 'quote.partStock' | translate: { count: line.controls.part.value.quantityInStock } }}</small>
+                }
+              </div>
+              <div class="field">
                 <label [for]="'line-desc-' + i">{{ 'quote.description' | translate }}</label>
                 <input pInputText [id]="'line-desc-' + i" formControlName="description" fluid />
                 @if (line.controls.description.touched && line.controls.description.errors) {
@@ -305,6 +329,9 @@
                   />
                   @if (line.controls.quantity.touched && line.controls.quantity.errors) {
                     <small class="field-error">{{ 'validation.quantity' | translate }}</small>
+                  }
+                  @if (line.hasError('wholeQuantity')) {
+                    <small class="field-error">{{ 'validation.wholeQuantity' | translate }}</small>
                   }
                 </div>
                 <div class="field">
@@ -349,6 +376,7 @@
             (onClick)="addLine()"
           />
         </div>
+        <small class="muted">{{ 'quote.partHelp' | translate }}</small>
         @if (lines.length === 0 && quoteForm.touched) {
           <small class="field-error">{{ 'quote.minLines' | translate }}</small>
         }

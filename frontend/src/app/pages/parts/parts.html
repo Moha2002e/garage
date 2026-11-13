@@ -1,0 +1,380 @@
+<section class="page">
+  <h1 class="page-title">{{ 'parts.title' | translate }}</h1>
+
+  <div class="toolbar">
+    <p-iconfield class="grow">
+      <p-inputicon class="pi pi-search" />
+      <input
+        pInputText
+        type="search"
+        fluid
+        [placeholder]="'parts.searchPlaceholder' | translate"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </p-iconfield>
+    <p-select
+      class="status-filter"
+      [options]="statusOptions()"
+      optionLabel="label"
+      optionValue="value"
+      [ngModel]="activeFilter()"
+      (ngModelChange)="onStatusChange($event)"
+      [ariaLabel]="'fields.status' | translate"
+    />
+    <span class="low-stock-filter">
+      <p-checkbox
+        inputId="lowStockOnly"
+        [binary]="true"
+        [ngModel]="lowStockOnly()"
+        (ngModelChange)="onLowStockChange($event)"
+      />
+      <label for="lowStockOnly">{{ 'parts.lowStockOnly' | translate }}</label>
+    </span>
+    @if (auth.canWrite()) {
+      <p-button icon="pi pi-plus" [label]="'parts.new' | translate" (onClick)="startCreate()" />
+    }
+  </div>
+
+  <p-table
+    [value]="items()"
+    [lazy]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    [paginator]="true"
+    [rows]="rows()"
+    [first]="first()"
+    [totalRecords]="total()"
+    [loading]="isLoading()"
+    [rowsPerPageOptions]="[10, 25]"
+    [rowHover]="true"
+    dataKey="id"
+  >
+    <ng-template #header>
+      <tr>
+        <th>{{ 'parts.reference' | translate }}</th>
+        <th>{{ 'parts.name' | translate }}</th>
+        <th class="num">{{ 'parts.unitPrice' | translate }}</th>
+        <th class="num">{{ 'parts.stock' | translate }}</th>
+        <th>{{ 'fields.status' | translate }}</th>
+        <th>{{ 'common.action' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-part>
+      <tr>
+        <td>{{ part.reference }}</td>
+        <td>{{ part.name }}</td>
+        <td class="num">{{ money(part.unitPrice) }}</td>
+        <td class="num">
+          <span class="stock-cell">
+            @if (part.lowStock) {
+              <p-tag [value]="'parts.lowStock' | translate" severity="warn" />
+            }
+            <strong>{{ part.quantityInStock }}</strong>
+          </span>
+        </td>
+        <td>
+          <p-tag
+            [value]="(part.active ? 'parts.active' : 'parts.inactive') | translate"
+            [severity]="part.active ? 'success' : 'danger'"
+          />
+        </td>
+        <td>
+          <div class="row-actions">
+            @if (auth.canWrite()) {
+              <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                [ariaLabel]="'common.edit' | translate"
+                (onClick)="startEdit(part)"
+              />
+              <p-button
+                icon="pi pi-sort-alt"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                [disabled]="!part.active"
+                [ariaLabel]="'parts.adjustStock' | translate"
+                (onClick)="startStock(part)"
+              />
+            }
+            <p-button
+              icon="pi pi-history"
+              [rounded]="true"
+              [text]="true"
+              size="small"
+              severity="secondary"
+              [ariaLabel]="'parts.journal' | translate"
+              (onClick)="startHistory(part)"
+            />
+            @if (auth.canWrite()) {
+              <p-button
+                [icon]="part.active ? 'pi pi-ban' : 'pi pi-replay'"
+                [rounded]="true"
+                [text]="true"
+                size="small"
+                [severity]="part.active ? 'danger' : 'secondary'"
+                [ariaLabel]="(part.active ? 'parts.deactivate' : 'parts.activate') | translate"
+                (onClick)="startConfirm(part)"
+              />
+            }
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">{{ 'parts.empty' | translate }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-dialog
+  [(visible)]="dialogOpen"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [dismissableMask]="!hasUnsavedChanges()"
+  [closeOnEscape]="!hasUnsavedChanges()"
+  [style]="{ width: '40rem', maxWidth: '94vw' }"
+  [breakpoints]="{ '640px': '96vw' }"
+  styleClass="app-dialog"
+>
+  <ng-template #header>
+    <div class="dialog-header">
+      <span class="dialog-title">
+        @switch (mode()) {
+          @case ('stock') {
+            {{ 'parts.adjustStock' | translate }}
+          }
+          @case ('history') {
+            {{ 'parts.journal' | translate }}
+          }
+          @case ('confirm') {
+            {{ selected()?.name }}
+          }
+          @default {
+            {{ (selected() ? 'common.edit' : 'parts.new') | translate }}
+          }
+        }
+      </span>
+      <p-button
+        icon="pi pi-times"
+        [rounded]="true"
+        [text]="true"
+        severity="secondary"
+        [ariaLabel]="'common.close' | translate"
+        (onClick)="requestClose()"
+      />
+    </div>
+  </ng-template>
+
+  @switch (mode()) {
+    @case ('confirm') {
+      <div class="confirm-view">
+        <i class="pi pi-exclamation-triangle confirm-icon"></i>
+        <p>
+          {{
+            (selected()?.active ? 'parts.confirmDeactivate' : 'parts.confirmActivate')
+              | translate: { name: selected()?.name }
+          }}
+        </p>
+        <div class="dialog-actions">
+          <p-button
+            [label]="'common.confirm' | translate"
+            [loading]="isSaving()"
+            [disabled]="isSaving()"
+            (onClick)="confirmToggleActive()"
+          />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="dialogOpen.set(false)"
+          />
+        </div>
+      </div>
+    }
+
+    @case ('history') {
+      <p class="current-stock">
+        {{ selected()?.reference }} · {{ selected()?.name }} ·
+        {{ 'parts.stock' | translate }} : <strong>{{ selected()?.quantityInStock }}</strong>
+      </p>
+      <p-table
+        [value]="movements()"
+        [lazy]="true"
+        (onLazyLoad)="onMovementsLazyLoad($event)"
+        [paginator]="true"
+        [rows]="movementsRows"
+        [first]="movementsFirst()"
+        [totalRecords]="movementsTotal()"
+        [loading]="movementsLoading()"
+        dataKey="id"
+      >
+        <ng-template #header>
+          <tr>
+            <th>{{ 'fields.date' | translate }}</th>
+            <th>{{ 'parts.movementType' | translate }}</th>
+            <th class="num">{{ 'parts.quantity' | translate }}</th>
+            <th>{{ 'parts.reason' | translate }}</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-movement>
+          <tr>
+            <td>{{ movement.createdAt | date: settings.dateFormat().angular + ' HH:mm' }}</td>
+            <td>{{ 'parts.movement.' + movement.type | translate }}</td>
+            <td class="num">
+              <span [class.qty-out]="movement.type === 'OUT' || movement.quantity < 0" [class.qty-in]="movement.type === 'IN' || (movement.type === 'ADJUSTMENT' && movement.quantity > 0)">
+                {{ signedQuantity(movement) }}
+              </span>
+            </td>
+            <td>{{ movement.reason }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="4">{{ 'parts.noMovement' | translate }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    }
+
+    @case ('stock') {
+      <p class="current-stock">
+        {{ selected()?.reference }} · {{ selected()?.name }} ·
+        {{ 'parts.stock' | translate }} : <strong>{{ selected()?.quantityInStock }}</strong>
+      </p>
+      <form class="dialog-form" [formGroup]="stockForm" (ngSubmit)="saveStock()" novalidate>
+        <div class="field">
+          <label for="movementType">{{ 'parts.movementType' | translate }}</label>
+          <p-select inputId="movementType" formControlName="type" [options]="movementTypes" fluid>
+            <ng-template #selectedItem let-type>{{ 'parts.movement.' + type | translate }}</ng-template>
+            <ng-template #item let-type>{{ 'parts.movement.' + type | translate }}</ng-template>
+          </p-select>
+          <small class="muted">{{ 'parts.movementHelp.' + stockForm.controls.type.value | translate }}</small>
+        </div>
+        <div class="field">
+          <label for="stockQuantity">{{ 'parts.quantity' | translate }}</label>
+          <p-inputnumber
+            inputId="stockQuantity"
+            formControlName="quantity"
+            [min]="stockForm.controls.type.value === 'ADJUSTMENT' ? undefined : 1"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            fluid
+          />
+          @if (stockForm.controls.quantity.touched && (stockForm.controls.quantity.errors || stockForm.hasError('quantity'))) {
+            <small class="field-error">
+              {{
+                (stockForm.controls.quantity.errors
+                  ? 'validation.required'
+                  : stockForm.controls.type.value === 'ADJUSTMENT'
+                    ? 'validation.quantityNotZero'
+                    : 'validation.quantity'
+                ) | translate
+              }}
+            </small>
+          }
+        </div>
+        <div class="field">
+          <label for="stockReason">{{ 'parts.reason' | translate }}</label>
+          <input pInputText id="stockReason" formControlName="reason" fluid />
+        </div>
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="requestClose()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+
+    @default {
+      <form class="dialog-form" [formGroup]="partForm" (ngSubmit)="savePart()" novalidate>
+        <div class="field">
+          <label for="reference">{{ 'parts.reference' | translate }}</label>
+          <input pInputText id="reference" formControlName="reference" fluid />
+          @if (partForm.controls.reference.touched && partForm.controls.reference.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="partName">{{ 'parts.name' | translate }}</label>
+          <input pInputText id="partName" formControlName="name" fluid />
+          @if (partForm.controls.name.touched && partForm.controls.name.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="unitPrice">{{ 'parts.unitPrice' | translate }}</label>
+          <p-inputnumber
+            inputId="unitPrice"
+            formControlName="unitPrice"
+            mode="currency"
+            currency="EUR"
+            [locale]="settings.language() === 'en' ? 'en-GB' : 'fr-BE'"
+            [min]="0"
+            fluid
+          />
+          @if (partForm.controls.unitPrice.touched && partForm.controls.unitPrice.errors) {
+            <small class="field-error">{{ 'validation.price' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="lowStockThreshold">{{ 'parts.lowStockThreshold' | translate }}</label>
+          <p-inputnumber
+            inputId="lowStockThreshold"
+            formControlName="lowStockThreshold"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            fluid
+          />
+          @if (partForm.controls.lowStockThreshold.touched && partForm.controls.lowStockThreshold.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="field">
+          <label for="leadTimeDays">{{ 'parts.leadTimeDays' | translate }}</label>
+          <p-inputnumber
+            inputId="leadTimeDays"
+            formControlName="leadTimeDays"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            fluid
+          />
+          <small class="muted">{{ 'parts.leadTimeHelp' | translate }}</small>
+          @if (partForm.controls.leadTimeDays.touched && partForm.controls.leadTimeDays.errors) {
+            <small class="field-error">{{ 'validation.required' | translate }}</small>
+          }
+        </div>
+        <div class="dialog-actions">
+          <p-button type="submit" [label]="'common.save' | translate" [loading]="isSaving()" [disabled]="isSaving()" />
+          <p-button
+            [label]="'common.cancel' | translate"
+            severity="secondary"
+            [outlined]="true"
+            [disabled]="isSaving()"
+            (onClick)="requestClose()"
+          />
+        </div>
+        @if (formError(); as message) {
+          <p-message severity="error">{{ message }}</p-message>
+        }
+      </form>
+    }
+  }
+</p-dialog>

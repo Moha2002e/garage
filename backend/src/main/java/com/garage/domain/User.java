@@ -40,6 +40,10 @@ public class User extends Auditable {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    /** Incremented on logout-everywhere or password change: invalidates every JWT issued before this value. */
+    @Column(name = "token_version", nullable = false)
+    private long tokenVersion;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", unique = true)
     private Client client;

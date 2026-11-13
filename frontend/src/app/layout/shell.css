@@ -8,7 +8,8 @@
   top: 0;
   z-index: 100;
   background: var(--p-content-background);
-  border-bottom: 1px solid var(--p-content-border-color);
+  /* Filet or sous la barre : seule touche de couleur permanente du bandeau. */
+  border-bottom: 1px solid color-mix(in srgb, var(--p-primary-300) 70%, var(--p-content-border-color));
 }
 
 :host ::ng-deep .topbar-menu.p-menubar {
@@ -25,8 +26,11 @@
   margin-right: 1rem;
   color: var(--p-text-color);
   text-decoration: none;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--app-font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .brand-logo {

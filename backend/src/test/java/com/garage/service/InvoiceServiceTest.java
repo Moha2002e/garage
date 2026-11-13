@@ -32,6 +32,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import com.garage.mapper.InvoiceMapper;
+import org.mapstruct.factory.Mappers;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -47,7 +49,7 @@ class InvoiceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new InvoiceService(invoiceRepository);
+        service = new InvoiceService(invoiceRepository, Mappers.getMapper(InvoiceMapper.class));
         Client client = new Client();
         client.setId(UUID.randomUUID());
         client.setFirstName("Jean");

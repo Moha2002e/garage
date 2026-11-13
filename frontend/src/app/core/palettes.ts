@@ -1,5 +1,5 @@
 /** Palettes de couleur principale. Les couleurs de statut (vert, rouge, orange, bleu) ne dépendent jamais de ce choix. */
-export type PaletteId = 'teal' | 'blue' | 'indigo' | 'green' | 'orange' | 'rose';
+export type PaletteId = 'gold' | 'teal' | 'blue' | 'indigo' | 'green' | 'orange' | 'rose';
 
 export interface Palette {
   id: PaletteId;
@@ -25,7 +25,26 @@ function scale(name: string): Record<string, string> {
   };
 }
 
+/**
+ * Or champagne. Échelle écrite à la main (pas de nuance « gold » dans PrimeNG) : la 500 est un or bronze assez
+ * sombre pour garder un texte blanc lisible (contraste 4,9) sur les boutons ; la 400, plus claire, sert en mode sombre.
+ */
+const GOLD: Record<string, string> = {
+  50: '#faf6ec',
+  100: '#f2e8cc',
+  200: '#e6d29e',
+  300: '#d9ba72',
+  400: '#d4ae5c',
+  500: '#8f6a1f',
+  600: '#79591a',
+  700: '#634816',
+  800: '#4f3a13',
+  900: '#3f2e10',
+  950: '#2a1f0b'
+};
+
 export const PALETTES: Palette[] = [
+  { id: 'gold', hex: '#b8913f', primary: GOLD },
   { id: 'teal', hex: '#0d9488', primary: scale('teal') },
   { id: 'blue', hex: '#2563eb', primary: scale('blue') },
   { id: 'indigo', hex: '#4f46e5', primary: scale('indigo') },
@@ -34,8 +53,9 @@ export const PALETTES: Palette[] = [
   { id: 'rose', hex: '#e11d48', primary: scale('rose') }
 ];
 
-export const DEFAULT_PALETTE_ID: PaletteId = 'teal';
-export const PALETTE_KEY = 'garage.palette';
+export const DEFAULT_PALETTE_ID: PaletteId = 'gold';
+// Nouvelle clé (v2) : les choix mémorisés avec l'ancien style (teal, indigo…) sont abandonnés une fois, pour que tout le monde voie l'or.
+export const PALETTE_KEY = 'garage.palette.v2';
 
 export function paletteById(id: string | null | undefined): Palette {
   return PALETTES.find((p) => p.id === id) ?? PALETTES[0];

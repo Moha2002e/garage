@@ -38,11 +38,12 @@ class DashboardServiceTest {
     @Mock ClientRepository clientRepository;
     @Mock VehicleRepository vehicleRepository;
     @Mock InvoiceRepository invoiceRepository;
+    @Mock com.garage.repository.PartRepository partRepository;
 
     @Test
     void assemblesTheKeyFigures() {
         var service = new DashboardService(appointmentRepository, appointmentService, quoteRepository,
-                clientRepository, vehicleRepository, invoiceRepository);
+                clientRepository, vehicleRepository, invoiceRepository, partRepository);
         when(appointmentRepository.findByStatusInAndDateGreaterThanEqualAndDateLessThanOrderByDateAsc(any(), any(), any()))
                 .thenReturn(List.of());
         when(appointmentService.toResponses(List.of())).thenReturn(List.of());
@@ -69,7 +70,7 @@ class DashboardServiceTest {
     @Test
     void revenueIsZeroWithTwoDecimalsWhenThereIsNoAcceptedQuote() {
         var service = new DashboardService(appointmentRepository, appointmentService, quoteRepository,
-                clientRepository, vehicleRepository, invoiceRepository);
+                clientRepository, vehicleRepository, invoiceRepository, partRepository);
         when(appointmentRepository.findByStatusInAndDateGreaterThanEqualAndDateLessThanOrderByDateAsc(any(), any(), any()))
                 .thenReturn(List.of());
         when(appointmentService.toResponses(List.of())).thenReturn(List.of());
@@ -97,7 +98,7 @@ class DashboardServiceTest {
     @Test
     void shortListsAndInvoiceFiguresAreAddedWithoutChangingTheExistingFields() {
         var service = new DashboardService(appointmentRepository, appointmentService, quoteRepository,
-                clientRepository, vehicleRepository, invoiceRepository);
+                clientRepository, vehicleRepository, invoiceRepository, partRepository);
         Appointment today = appointment(AppointmentStatus.COMPLETED, "2026-10-25T08:00:00Z", 90);
         Appointment running = appointment(AppointmentStatus.IN_PROGRESS, "2026-10-25T09:00:00Z", 60);
         Appointment next = appointment(AppointmentStatus.PLANNED, "2026-10-26T09:00:00Z", 30);
@@ -138,7 +139,7 @@ class DashboardServiceTest {
     @Test
     void unpaidAmountIsZeroWithTwoDecimalsWithoutIssuedInvoice() {
         var service = new DashboardService(appointmentRepository, appointmentService, quoteRepository,
-                clientRepository, vehicleRepository, invoiceRepository);
+                clientRepository, vehicleRepository, invoiceRepository, partRepository);
         when(appointmentRepository.findByStatusInAndDateGreaterThanEqualAndDateLessThanOrderByDateAsc(any(), any(), any()))
                 .thenReturn(List.of());
         when(appointmentService.toResponses(any())).thenReturn(List.of());

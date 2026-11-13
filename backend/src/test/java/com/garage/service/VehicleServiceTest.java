@@ -31,6 +31,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import com.garage.mapper.VehicleMapper;
+import org.mapstruct.factory.Mappers;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -47,7 +49,8 @@ class VehicleServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new VehicleService(vehicleRepository, appointmentRepository, clientService, currentUser);
+        service = new VehicleService(vehicleRepository, appointmentRepository, clientService, currentUser,
+                Mappers.getMapper(VehicleMapper.class));
         client = new Client();
         client.setId(UUID.randomUUID());
         client.setFirstName("Ana");

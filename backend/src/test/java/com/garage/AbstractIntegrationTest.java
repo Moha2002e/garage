@@ -5,17 +5,21 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
-/** Real PostgreSQL through Testcontainers (Docker must be running). Test-only secret below. */
+/**
+ * Real PostgreSQL through Testcontainers (Docker must be running). Test-only secret below.
+ * One container for the whole test run: Spring caches the application context between test classes, so a
+ * container stopped after each class would leave the cached context pointing at a dead port.
+ */
 @SpringBootTest
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void testProperties(DynamicPropertyRegistry registry) {

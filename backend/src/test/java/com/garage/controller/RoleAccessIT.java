@@ -284,4 +284,24 @@ class RoleAccessIT extends AbstractIntegrationTest {
     void adminPassesTheRoleCheckOfTheInvoicePdf() throws Exception {
         mockMvc.perform(get("/api/invoices/" + UUID.randomUUID() + "/pdf")).andExpect(status().isNotFound());
     }
+
+    @Test
+    @WithMockUser(roles = "CLIENT")
+    void clientCannotUseTheStockEndpointsEvenWithAnInvalidBody() throws Exception {
+        mockMvc.perform(get("/api/parts")).andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/parts").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/parts/" + UUID.randomUUID() + "/stock").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "EMPLOYEE")
+    void employeeReachesTheStockEndpoints() throws Exception {
+        mockMvc.perform(post("/api/parts").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+    }
 }

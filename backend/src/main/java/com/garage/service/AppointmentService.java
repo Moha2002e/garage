@@ -14,12 +14,13 @@ import com.garage.dto.PageResponse;
 import com.garage.exception.BusinessException;
 import com.garage.exception.ConflictException;
 import com.garage.exception.NotFoundException;
+import com.garage.mapper.AppointmentMapper;
 import com.garage.repository.AppointmentRepository;
 import com.garage.repository.QuoteRepository;
 import com.garage.security.AuthUser;
 import com.garage.security.CurrentUser;
+import com.garage.specification.AppointmentSpecifications;
 import com.garage.util.PageUtil;
-import jakarta.persistence.criteria.Join;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -59,16 +60,21 @@ public class AppointmentService {
     private final VehicleService vehicleService;
     private final CurrentUser currentUser;
     private final AppProperties props;
+    private final AppointmentMapper mapper;
+    private final QuoteStockService quoteStockService;
 
     public AppointmentService(AppointmentRepository appointmentRepository, QuoteRepository quoteRepository,
                               ClientService clientService, VehicleService vehicleService,
-                              CurrentUser currentUser, AppProperties props) {
+                              CurrentUser currentUser, AppProperties props, AppointmentMapper mapper,
+                              QuoteStockService quoteStockService) {
         this.appointmentRepository = appointmentRepository;
         this.quoteRepository = quoteRepository;
         this.clientService = clientService;
         this.vehicleService = vehicleService;
         this.currentUser = currentUser;
         this.props = props;
+        this.mapper = mapper;
+        this.quoteStockService = quoteStockService;
     }
 
     // ******************************************
@@ -86,11 +92,11 @@ public class AppointmentService {
         Specification<Appointment> spec = spec(q, status, from, to);
         if (spec == null) {
             Page<Appointment> empty = new PageImpl<>(List.of(), pageable, 0);
-            return PageResponse.from(empty, a -> toResponse(a, null));
+            return PageResponse.from(empty, a -> mapper.toResponse(a, null));
         }
         Page<Appointment> result = appointmentRepository.findAll(spec, pageable);
         Map<UUID, Quote> quotes = quotesOf(result.getContent());
-        return PageResponse.from(result, a -> toResponse(a, quotes.get(a.getId())));
+        return PageResponse.from(result, a -> mapper.toResponse(a, quotes.get(a.getId())));
     }
 
     /** Same filters as the list, capped, for exports (ADMIN only, enforced by the controller). */
@@ -145,24 +151,21 @@ public class AppointmentService {
             throw new NotFoundException("Client not found");
         }
         clientService.find(clientId);
-        Specification<Appointment> spec = (root, query, cb) -> cb.equal(root.get("client").get("id"), clientId);
-        return historyPage(spec, page, size);
+        return historyPage(AppointmentSpecifications.forClient(clientId), page, size);
     }
 
     /** History of a vehicle, newest first (page size capped at 50). A CLIENT only gets their own vehicles (else 404). */
     @Transactional(readOnly = true)
     public PageResponse<AppointmentResponse> listByVehicle(UUID vehicleId, int page, int size) {
         Vehicle vehicle = vehicleService.findAccessible(vehicleId);
-        UUID id = vehicle.getId();
-        Specification<Appointment> spec = (root, query, cb) -> cb.equal(root.get("vehicle").get("id"), id);
-        return historyPage(spec, page, size);
+        return historyPage(AppointmentSpecifications.forVehicle(vehicle.getId()), page, size);
     }
 
     private PageResponse<AppointmentResponse> historyPage(Specification<Appointment> spec, int page, int size) {
         Page<Appointment> result = appointmentRepository.findAll(spec,
                 PageUtil.ofCapped(page, size, HISTORY_SORT, MAX_HISTORY_PAGE_SIZE));
         Map<UUID, Quote> quotes = quotesOf(result.getContent());
-        return PageResponse.from(result, a -> toResponse(a, quotes.get(a.getId())));
+        return PageResponse.from(result, a -> mapper.toResponse(a, quotes.get(a.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -185,14 +188,8 @@ public class AppointmentService {
         Vehicle vehicle = checkedVehicle(request, client);
         requireValidDuration(request.durationMinutes());
         checkNoConflict(vehicle.getId(), request.date(), request.durationMinutes(), NO_APPOINTMENT);
-        Appointment appointment = new Appointment();
-        appointment.setClient(client);
-        appointment.setVehicle(vehicle);
-        appointment.setDate(request.date());
-        appointment.setDurationMinutes(request.durationMinutes());
-        appointment.setReason(request.reason().trim());
-        appointment.setStatus(AppointmentStatus.PLANNED);
-        return toResponse(appointmentRepository.save(appointment), null);
+        Appointment appointment = mapper.toEntity(request, client, vehicle);
+        return mapper.toResponse(appointmentRepository.save(appointment), null);
     }
 
     // ******************************************
@@ -214,10 +211,7 @@ public class AppointmentService {
         requireValidDuration(request.durationMinutes());
         // The appointment being edited is excluded, otherwise it would conflict with itself.
         checkNoConflict(vehicle.getId(), request.date(), request.durationMinutes(), appointment.getId());
-        appointment.setVehicle(vehicle);
-        appointment.setDate(request.date());
-        appointment.setDurationMinutes(request.durationMinutes());
-        appointment.setReason(request.reason().trim());
+        mapper.update(request, vehicle, appointment);
         return toResponses(List.of(appointment)).get(0);
     }
 
@@ -238,6 +232,11 @@ public class AppointmentService {
         if (!appointment.getStatus().canTransitionTo(target)) {
             throw new BusinessException("Status transition from " + appointment.getStatus() + " to " + target
                     + " is not allowed");
+        }
+        if (target == AppointmentStatus.CANCELLED) {
+            // The parts reserved by the quote go back to the stock.
+            quoteRepository.findWithLinesByAppointmentId(id).ifPresent(quote -> quoteStockService.releaseAll(quote,
+                    QuoteStockService.reason(id, "Appointment cancelled")));
         }
         appointment.setStatus(target);
         return toResponses(List.of(appointment)).get(0);
@@ -283,7 +282,7 @@ public class AppointmentService {
     /** Responses with quote status and total, using a single query for all the quotes. */
     List<AppointmentResponse> toResponses(List<Appointment> appointments) {
         Map<UUID, Quote> quotes = quotesOf(appointments);
-        return appointments.stream().map(a -> toResponse(a, quotes.get(a.getId()))).toList();
+        return appointments.stream().map(a -> mapper.toResponse(a, quotes.get(a.getId()))).toList();
     }
 
     private Map<UUID, Quote> quotesOf(List<Appointment> appointments) {
@@ -360,39 +359,19 @@ public class AppointmentService {
     private Specification<Appointment> spec(String q, AppointmentStatus status, LocalDate from, LocalDate to) {
         Specification<Appointment> spec = Specification.where(null);
         AuthUser user = currentUser.get();
+        // Scoping done here, not only by the endpoint annotations: a CLIENT only sees their own appointments.
         if (user.role() == Role.CLIENT) {
             if (user.clientId() == null) {
                 return null;
             }
-            UUID clientId = user.clientId();
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("client").get("id"), clientId));
+            spec = spec.and(AppointmentSpecifications.forClient(user.clientId()));
         }
-        if (q != null && !q.isBlank()) {
-            String like = PageUtil.likeTerm(q);
-            spec = spec.and((root, query, cb) -> {
-                Join<Appointment, Client> client = root.join("client");
-                Join<Appointment, Vehicle> vehicle = root.join("vehicle");
-                return cb.or(
-                        cb.like(cb.lower(root.get("reason")), like, '\\'),
-                        cb.like(cb.lower(client.get("lastName")), like, '\\'),
-                        cb.like(cb.lower(client.get("firstName")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("brand")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("model")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("plate")), like, '\\'));
-            });
-        }
-        if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
-        }
-        if (from != null) {
-            Instant start = from.atStartOfDay(PARIS).toInstant();
-            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.<Instant>get("date"), start));
-        }
-        if (to != null) {
-            Instant end = to.plusDays(1).atStartOfDay(PARIS).toInstant();
-            spec = spec.and((root, query, cb) -> cb.lessThan(root.<Instant>get("date"), end));
-        }
-        return spec;
+        Instant start = from == null ? null : from.atStartOfDay(PARIS).toInstant();
+        Instant end = to == null ? null : to.plusDays(1).atStartOfDay(PARIS).toInstant();
+        return spec.and(AppointmentSpecifications.matchesText(q))
+                .and(AppointmentSpecifications.hasStatus(status))
+                .and(AppointmentSpecifications.startsFrom(start))
+                .and(AppointmentSpecifications.startsBefore(end));
     }
 
     /** 0 to 100: elapsed share of the appointment while IN_PROGRESS, 100 when COMPLETED, 0 otherwise. */
@@ -415,16 +394,5 @@ public class AppointmentService {
                 (c.getFirstName() + " " + c.getLastName()).trim(),
                 (v.getBrand() + " " + v.getModel()).trim(),
                 a.getDurationMinutes(), progressPercent(a, now));
-    }
-
-    static AppointmentResponse toResponse(Appointment a, Quote quote) {
-        Client c = a.getClient();
-        Vehicle v = a.getVehicle();
-        return new AppointmentResponse(a.getId(), a.getDate(), a.getReason(), a.getStatus(),
-                c.getId(), c.getFirstName(), c.getLastName(),
-                v.getId(), v.getPlate(), v.getBrand(), v.getModel(),
-                a.getDurationMinutes(),
-                quote == null ? null : quote.getStatus(),
-                quote == null ? null : quote.getTotal());
     }
 }

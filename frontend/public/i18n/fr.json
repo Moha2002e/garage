@@ -32,7 +32,9 @@
     "passwordMismatch": "Les deux mots de passe ne sont pas identiques.",
     "phone": "Le numéro de téléphone n'est pas valide.",
     "quantity": "La quantité doit être supérieure à 0.",
-    "price": "Le prix doit être supérieur ou égal à 0."
+    "price": "Le prix doit être supérieur ou égal à 0.",
+    "quantityNotZero": "La quantité ne peut pas être 0.",
+    "wholeQuantity": "Une pièce se compte en unités : la quantité doit être un nombre entier."
   },
   "fields": {
     "email": "Adresse e-mail",
@@ -73,6 +75,7 @@
     "logout": "Se déconnecter",
     "dashboard": "Accueil",
     "vehicles": "Véhicules",
+    "parts": "Pièces",
     "invoices": "Factures"
   },
   "login": {
@@ -80,7 +83,6 @@
     "rememberMe": "Se souvenir de moi",
     "submit": "Se connecter",
     "forgot": "Mot de passe oublié ?",
-    "createAccount": "Créer un compte"
   },
   "register": {
     "title": "Créer un compte",
@@ -190,6 +192,7 @@
     "exported": "Le fichier a été téléchargé.",
     "palette": "Couleur principale",
     "palettes": {
+      "gold": "Or champagne",
       "teal": "Teal",
       "blue": "Bleu",
       "indigo": "Indigo",
@@ -209,6 +212,8 @@
     "pendingInvoices": "{{count}} rendez-vous terminés attendent une facture.",
     "goInvoices": "Aller aux factures",
     "unpaidInvoices": "Factures impayées",
+    "lowStockParts": "Pièces en stock bas",
+    "seeParts": "Voir les pièces",
     "seeUnpaid": "Voir les impayées",
     "todayBlock": "Aujourd'hui",
     "inProgressBlock": "En cours maintenant",
@@ -233,12 +238,59 @@
     "deleted": "Le véhicule {{name}} a été supprimé.",
     "reactivated": "Le véhicule {{name}} a été réactivé."
   },
+  "parts": {
+    "title": "Pièces et stock",
+    "searchPlaceholder": "Rechercher une pièce",
+    "new": "Nouvelle pièce",
+    "allStatuses": "Tous les statuts",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "lowStockOnly": "Stock bas uniquement",
+    "lowStock": "Stock bas",
+    "empty": "Aucune pièce",
+    "reference": "Référence",
+    "name": "Désignation",
+    "unitPrice": "Prix unitaire HT",
+    "stock": "Stock",
+    "lowStockThreshold": "Seuil d'alerte",
+    "leadTimeDays": "Délai de livraison (jours)",
+    "leadTimeHelp": "Affiché quand le stock est insuffisant pour un devis. 0 = inconnu.",
+    "quantity": "Quantité",
+    "reason": "Motif",
+    "movementType": "Type de mouvement",
+    "adjustStock": "Ajuster le stock",
+    "journal": "Journal du stock",
+    "noMovement": "Aucun mouvement pour cette pièce.",
+    "deactivate": "Désactiver",
+    "activate": "Réactiver",
+    "confirmDeactivate": "Êtes-vous sûr de vouloir désactiver la pièce {{name}} ?",
+    "confirmActivate": "Êtes-vous sûr de vouloir réactiver la pièce {{name}} ?",
+    "created": "La pièce {{name}} a été créée.",
+    "updated": "La pièce {{name}} a été modifiée.",
+    "deactivated": "La pièce {{name}} a été désactivée.",
+    "activated": "La pièce {{name}} a été réactivée.",
+    "stockUpdated": "Le stock de {{name}} a été mis à jour.",
+    "movement": {
+      "IN": "Entrée",
+      "OUT": "Sortie",
+      "ADJUSTMENT": "Ajustement"
+    },
+    "movementHelp": {
+      "IN": "Pièces reçues : la quantité s'ajoute au stock.",
+      "OUT": "Pièces utilisées : la quantité est retirée du stock.",
+      "ADJUSTMENT": "Correction d'inventaire : saisissez la différence, positive ou négative."
+    }
+  },
   "quote": {
     "title": "Devis",
     "loading": "Chargement du devis",
     "none": "Aucun devis pour ce rendez-vous.",
     "create": "Créer un devis",
     "edit": "Modifier le devis",
+    "part": "Pièce du catalogue (facultatif)",
+    "partPlaceholder": "Main-d'œuvre ou texte libre si vide",
+    "partStock": "En stock : {{count}}",
+    "partHelp": "Une pièce réserve son stock dès l'enregistrement du devis. Il est remis en stock si la ligne est retirée, si le devis est refusé ou si le rendez-vous est annulé.",
     "description": "Description",
     "quantity": "Quantité",
     "unitPrice": "Prix unitaire",

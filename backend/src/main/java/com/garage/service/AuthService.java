@@ -1,9 +1,7 @@
 package com.garage.service;
 
 import com.garage.config.AppProperties;
-import com.garage.domain.Language;
 import com.garage.domain.PasswordResetToken;
-import com.garage.domain.Role;
 import com.garage.domain.User;
 import com.garage.dto.AuthDtos.ForgotPasswordRequest;
 import com.garage.dto.AuthDtos.LoginRequest;
@@ -13,6 +11,8 @@ import com.garage.dto.AuthDtos.ResetPasswordRequest;
 import com.garage.exception.BusinessException;
 import com.garage.exception.ConflictException;
 import com.garage.exception.NotFoundException;
+import com.garage.mapper.AuthMapper;
+import com.garage.mapper.MapperSupport;
 import com.garage.repository.PasswordResetTokenRepository;
 import com.garage.repository.UserRepository;
 import com.garage.security.AuthUser;
@@ -25,6 +25,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.HexFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -33,7 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final SecureRandom RANDOM = new SecureRandom();
+    // A bcrypt hash of a random value nobody will ever type: checked against when the e-mail is unknown,
+    // so an unknown e-mail takes the same time as a wrong password instead of answering instantly
+    // (an instant answer would tell an attacker the e-mail does not exist). Computed once at startup
+    // with the same encoder as real passwords, so it is always a format bcrypt accepts.
+    private final String dummyHash;
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
@@ -41,41 +49,46 @@ public class AuthService {
     private final MailService mailService;
     private final AppProperties props;
     private final CurrentUser currentUser;
+    private final AuthMapper mapper;
 
     public AuthService(UserRepository userRepository, PasswordResetTokenRepository tokenRepository,
                        PasswordEncoder passwordEncoder, MailService mailService, AppProperties props,
-                       CurrentUser currentUser) {
+                       CurrentUser currentUser, AuthMapper mapper) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
         this.props = props;
         this.currentUser = currentUser;
+        this.mapper = mapper;
+        this.dummyHash = passwordEncoder.encode(java.util.UUID.randomUUID().toString());
     }
 
     /** Free sign-up always creates the least privileged role; only an admin can promote the account. */
     @Transactional
     public void register(RegisterRequest request) {
-        String email = request.email().trim().toLowerCase();
-        if (userRepository.existsByEmailIgnoreCase(email)) {
+        if (userRepository.existsByEmailIgnoreCase(MapperSupport.normalizeEmail(request.email()))) {
             throw new ConflictException("Email already registered");
         }
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setFirstName(request.firstName().trim());
-        user.setLastName(request.lastName().trim());
-        user.setRole(Role.CLIENT);
-        user.setLanguage(request.language() == null ? Language.FR : request.language());
-        userRepository.save(user);
+        userRepository.save(mapper.toUser(request, passwordEncoder.encode(request.password())));
     }
 
+    /**
+     * Every failed attempt is logged (email only, never the password): a flood of these lines for the
+     * same email, close together, is the signature of a brute-force or credential-stuffing attack.
+     */
     @Transactional(readOnly = true)
     public User authenticate(LoginRequest request) {
-        User user = userRepository.findWithClientByEmail(request.email().trim()).orElse(null);
-        if (user == null || !user.isEnabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        String email = request.email().trim();
+        User user = userRepository.findWithClientByEmail(email).orElse(null);
+        // Always runs bcrypt, on a real hash or the dummy one: an unknown e-mail must take the same
+        // time as a wrong password, otherwise the response time alone reveals which e-mails exist.
+        boolean passwordOk = passwordEncoder.matches(request.password(), user == null ? dummyHash : user.getPasswordHash());
+        if (user == null || !user.isEnabled() || !passwordOk) {
+            log.warn("Failed login attempt for {}", email);
             throw new BadCredentialsException("Invalid credentials");
         }
+        log.info("Successful login for {}", email);
         return user;
     }
 
@@ -88,11 +101,8 @@ public class AuthService {
                     byte[] bytes = new byte[32];
                     RANDOM.nextBytes(bytes);
                     String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-                    PasswordResetToken token = new PasswordResetToken();
-                    token.setUser(user);
-                    token.setTokenHash(hash(rawToken));
-                    token.setExpiresAt(Instant.now().plus(props.resetTokenMinutes(), ChronoUnit.MINUTES));
-                    tokenRepository.save(token);
+                    tokenRepository.save(mapper.toResetToken(user, hash(rawToken),
+                            Instant.now().plus(props.resetTokenMinutes(), ChronoUnit.MINUTES)));
                     mailService.sendPasswordReset(user.getEmail(), user.getLanguage(), rawToken);
                 });
     }
@@ -103,7 +113,10 @@ public class AuthService {
                 .filter(t -> !t.isUsed() && t.getExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> new BusinessException("Invalid or expired token"));
         token.setUsed(true);
-        token.getUser().setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        User user = token.getUser();
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        // Revokes every session opened before this change (a stolen cookie stops working).
+        user.setTokenVersion(user.getTokenVersion() + 1);
     }
 
     @Transactional(readOnly = true)
@@ -111,8 +124,7 @@ public class AuthService {
         AuthUser auth = currentUser.get();
         User user = userRepository.findWithClientById(auth.id())
                 .orElseThrow(() -> new NotFoundException("User not found"));
-        return new MeResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(),
-                user.getRole(), user.getLanguage(), auth.clientId(), auth.clientId() != null);
+        return mapper.toMe(user);
     }
 
     static String hash(String value) {

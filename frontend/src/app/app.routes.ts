@@ -10,11 +10,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login').then((m) => m.Login)
   },
   {
-    path: 'register',
-    canActivate: [guestGuard],
-    loadComponent: () => import('./pages/register/register').then((m) => m.Register)
-  },
-  {
     path: 'forgot-password',
     canActivate: [guestGuard],
     loadComponent: () =>
@@ -59,6 +54,12 @@ export const routes: Routes = [
         canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
         canDeactivate: [unsavedChangesGuard],
         loadComponent: () => import('./pages/vehicle-detail/vehicle-detail').then((m) => m.VehicleDetail)
+      },
+      {
+        path: 'parts',
+        canActivate: [roleGuard('ADMIN', 'EMPLOYEE')],
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () => import('./pages/parts/parts').then((m) => m.Parts)
       },
       {
         path: 'appointments',

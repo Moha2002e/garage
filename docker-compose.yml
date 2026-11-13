@@ -43,6 +43,10 @@ services:
       FRONT_URL: http://garage.localhost:4201
       COOKIE_SECURE: "false"
       TZ: Europe/Paris
+      # Hides Swagger/OpenAPI without the "prod" profile, which would also force a secure cookie
+      # that plain HTTP (no TLS here) can never satisfy.
+      SPRINGDOC_API_DOCS_ENABLED: "false"
+      SPRINGDOC_SWAGGER_UI_ENABLED: "false"
     ports:
       - "8082:8080"
 

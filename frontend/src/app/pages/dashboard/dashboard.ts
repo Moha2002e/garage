@@ -39,6 +39,7 @@ export class Dashboard {
   protected readonly inProgressList = computed<DashboardAppointment[]>(() => this.data()?.inProgressNow ?? []);
   protected readonly upcomingList = computed<DashboardAppointment[]>(() => (this.data()?.upcoming ?? []).slice(0, 5));
   protected readonly pending = computed(() => this.data()?.pendingInvoiceCount ?? 0);
+  protected readonly lowStockParts = computed(() => this.data()?.lowStockParts ?? 0);
   protected readonly unpaidCount = computed(() => this.data()?.unpaidInvoicesCount ?? 0);
   protected readonly unpaidAmount = computed(() =>
     formatMoney(this.data()?.unpaidInvoicesAmount, this.settings.language())
@@ -79,6 +80,10 @@ export class Dashboard {
   /** Une ligne ouvre le détail du rendez-vous dans la page des rendez-vous. */
   protected openAppointment(id: string): void {
     this.router.navigate(['/appointments'], { queryParams: { open: id } });
+  }
+
+  protected goParts(): void {
+    this.router.navigate(['/parts']);
   }
 
   protected goInvoices(status?: 'ISSUED'): void {

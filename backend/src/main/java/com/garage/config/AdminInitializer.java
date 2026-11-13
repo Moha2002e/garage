@@ -1,8 +1,7 @@
 package com.garage.config;
 
-import com.garage.domain.Language;
 import com.garage.domain.Role;
-import com.garage.domain.User;
+import com.garage.mapper.AuthMapper;
 import com.garage.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,11 +19,14 @@ public class AdminInitializer implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AppProperties props;
+    private final AuthMapper mapper;
 
-    public AdminInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, AppProperties props) {
+    public AdminInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder, AppProperties props,
+                            AuthMapper mapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.props = props;
+        this.mapper = mapper;
     }
 
     @Override
@@ -38,14 +40,7 @@ public class AdminInitializer implements ApplicationRunner {
             log.warn("No ADMIN account exists and ADMIN_EMAIL / ADMIN_PASSWORD (min 8 chars) are not set");
             return;
         }
-        User admin = new User();
-        admin.setEmail(email.trim().toLowerCase());
-        admin.setPasswordHash(passwordEncoder.encode(password));
-        admin.setFirstName("Admin");
-        admin.setLastName("Garage");
-        admin.setRole(Role.ADMIN);
-        admin.setLanguage(Language.FR);
-        userRepository.save(admin);
+        userRepository.save(mapper.toAdmin(email, passwordEncoder.encode(password)));
         log.info("Initial administrator account created");
     }
 }

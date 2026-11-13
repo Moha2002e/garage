@@ -24,6 +24,11 @@ public class QuoteLine extends Auditable {
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
+    /** Catalogue part of this line; empty for labour or free text. A part line reserves stock. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "part_id")
+    private Part part;
+
     @Column(nullable = false)
     private String description;
 

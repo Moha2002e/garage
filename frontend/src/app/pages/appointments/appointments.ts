@@ -29,11 +29,13 @@ import { appointmentSeverity } from '../../core/status';
 import { HasUnsavedChanges } from '../../core/unsaved-changes.guard';
 import { Appointment, AppointmentStatus, CalendarEvent } from '../../models/appointment.model';
 import { Client } from '../../models/client.model';
+import { Part } from '../../models/part.model';
 import { Quote, QuoteStatus } from '../../models/quote.model';
 import { AppointmentService } from '../../services/appointment.service';
 import { AuthService } from '../../services/auth.service';
 import { ClientService } from '../../services/client.service';
 import { LeaveConfirmService } from '../../services/leave-confirm.service';
+import { PartService } from '../../services/part.service';
 import { NotificationService } from '../../services/notification.service';
 import { QuoteService } from '../../services/quote.service';
 import { SettingsService } from '../../services/settings.service';
@@ -43,7 +45,10 @@ type DialogMode = 'view' | 'edit' | 'create' | 'confirm' | 'quoteEdit' | 'quoteC
 type StatusAction = 'IN_PROGRESS' | 'CANCELLED' | 'COMPLETED';
 type QuoteAction = 'ACCEPTED' | 'REFUSED';
 type ClientOption = Pick<Client, 'id' | 'firstName' | 'lastName'>;
+// Pièce choisie sur une ligne ; stock et prix ne sont connus que pour une pièce qui vient d'être cherchée.
+type PartOption = Pick<Part, 'id' | 'reference' | 'name'> & Partial<Pick<Part, 'unitPrice' | 'quantityInStock'>>;
 type QuoteLineGroup = FormGroup<{
+  part: FormControl<PartOption | null>;
   description: FormControl<string>;
   quantity: FormControl<number>;
   unitPrice: FormControl<number>;
@@ -57,6 +62,12 @@ const DURATIONS = Array.from({ length: 32 }, (_, i) => (i + 1) * 15).map((minute
   label: formatDuration(minutes)
 }));
 const MAX_QUOTE_LINES = 50;
+
+/** Une pièce se compte en unités : sa quantité doit être entière. */
+function wholePartQuantity(group: AbstractControl): ValidationErrors | null {
+  const { part, quantity } = (group as QuoteLineGroup).getRawValue();
+  return part && !Number.isInteger(quantity) ? { wholeQuantity: true } : null;
+}
 
 /** Un devis doit avoir au moins une ligne. */
 function minLines(control: AbstractControl): ValidationErrors | null {
@@ -91,6 +102,7 @@ export class Appointments implements OnInit, HasUnsavedChanges {
   private readonly appointmentService = inject(AppointmentService);
   private readonly clientService = inject(ClientService);
   private readonly quoteService = inject(QuoteService);
+  private readonly partService = inject(PartService);
   private readonly notifications = inject(NotificationService);
   private readonly leaveConfirm = inject(LeaveConfirmService);
   private readonly translate = inject(TranslateService);
@@ -177,6 +189,7 @@ export class Appointments implements OnInit, HasUnsavedChanges {
 
   // Formulaire
   protected readonly clientSuggestions = signal<ClientOption[]>([]);
+  protected readonly partSuggestions = signal<PartOption[]>([]);
   protected readonly vehicleOptions = signal<{ id: string; label: string }[]>([]);
   protected readonly appointmentForm = this.fb.group({
     client: this.fb.control<ClientOption | null>(null, Validators.required),
@@ -592,19 +605,57 @@ export class Appointments implements OnInit, HasUnsavedChanges {
     });
   }
 
-  private newLine(description = '', quantity = 1, unitPrice = 0): QuoteLineGroup {
-    return this.fb.group({
-      description: [description, [Validators.required, Validators.maxLength(255)]],
-      quantity: this.fb.control(quantity, [Validators.required, Validators.min(0.01)]),
-      unitPrice: this.fb.control(unitPrice, [Validators.required, Validators.min(0)])
+  private newLine(
+    description = '',
+    quantity = 1,
+    unitPrice = 0,
+    part: PartOption | null = null
+  ): QuoteLineGroup {
+    return this.fb.group(
+      {
+        part: this.fb.control<PartOption | null>(part),
+        description: [description, [Validators.required, Validators.maxLength(255)]],
+        quantity: this.fb.control(quantity, [Validators.required, Validators.min(0.01)]),
+        unitPrice: this.fb.control(unitPrice, [Validators.required, Validators.min(0)])
+      },
+      { validators: wholePartQuantity }
+    );
+  }
+
+  /** Recherche dans les pièces actives du catalogue (réservé aux rôles qui peuvent modifier un devis). */
+  protected searchParts(event: AutoCompleteCompleteEvent): void {
+    this.partService.search({ q: event.query, active: true, lowStock: false }, 0, 10).subscribe({
+      next: (page) => this.partSuggestions.set(page.content),
+      error: (error: unknown) => this.notifications.error(error)
     });
   }
+
+  /** Une pièce choisie remplit la désignation et le prix ; la ligne se compte alors en unités. */
+  protected onPartSelected(line: QuoteLineGroup, part: Part): void {
+    line.patchValue({
+      description: `${part.reference} - ${part.name}`,
+      unitPrice: part.unitPrice,
+      quantity: Math.max(1, Math.round(line.getRawValue().quantity))
+    });
+    this.quoteForm.markAsDirty();
+  }
+
+  protected partLabel = (part: PartOption): string => `${part.reference} - ${part.name}`;
 
   protected startQuoteEdit(): void {
     const quote = this.quote();
     this.lines.clear();
     if (quote) {
-      quote.lines.forEach((l) => this.lines.push(this.newLine(l.description, l.quantity, l.unitPrice)));
+      quote.lines.forEach((l) =>
+        this.lines.push(
+          this.newLine(
+            l.description,
+            l.quantity,
+            l.unitPrice,
+            l.partId ? { id: l.partId, reference: l.partReference ?? '', name: l.description } : null
+          )
+        )
+      );
     } else {
       this.lines.push(this.newLine());
     }
@@ -644,6 +695,7 @@ export class Appointments implements OnInit, HasUnsavedChanges {
     }
     const request = {
       lines: this.lines.getRawValue().map((l) => ({
+        partId: l.part?.id ?? null,
         description: l.description.trim(),
         quantity: l.quantity,
         unitPrice: l.unitPrice

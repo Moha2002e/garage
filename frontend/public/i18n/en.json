@@ -32,7 +32,9 @@
     "passwordMismatch": "The two passwords do not match.",
     "phone": "The phone number is not valid.",
     "quantity": "The quantity must be greater than 0.",
-    "price": "The price must be 0 or more."
+    "price": "The price must be 0 or more.",
+    "quantityNotZero": "The quantity cannot be 0.",
+    "wholeQuantity": "A part is counted in units: the quantity must be a whole number."
   },
   "fields": {
     "email": "E-mail address",
@@ -73,6 +75,7 @@
     "logout": "Log out",
     "dashboard": "Home",
     "vehicles": "Vehicles",
+    "parts": "Parts",
     "invoices": "Invoices"
   },
   "login": {
@@ -80,7 +83,6 @@
     "rememberMe": "Remember me",
     "submit": "Log in",
     "forgot": "Forgot your password?",
-    "createAccount": "Create an account"
   },
   "register": {
     "title": "Create an account",
@@ -190,6 +192,7 @@
     "exported": "The file has been downloaded.",
     "palette": "Main colour",
     "palettes": {
+      "gold": "Champagne gold",
       "teal": "Teal",
       "blue": "Blue",
       "indigo": "Indigo",
@@ -209,6 +212,8 @@
     "pendingInvoices": "{{count}} completed appointments are waiting for an invoice.",
     "goInvoices": "Go to invoices",
     "unpaidInvoices": "Unpaid invoices",
+    "lowStockParts": "Low-stock parts",
+    "seeParts": "See the parts",
     "seeUnpaid": "See unpaid invoices",
     "todayBlock": "Today",
     "inProgressBlock": "In progress now",
@@ -233,12 +238,59 @@
     "deleted": "The vehicle {{name}} has been deleted.",
     "reactivated": "The vehicle {{name}} has been reactivated."
   },
+  "parts": {
+    "title": "Parts and stock",
+    "searchPlaceholder": "Search a part",
+    "new": "New part",
+    "allStatuses": "All statuses",
+    "active": "Active",
+    "inactive": "Inactive",
+    "lowStockOnly": "Low stock only",
+    "lowStock": "Low stock",
+    "empty": "No part",
+    "reference": "Reference",
+    "name": "Name",
+    "unitPrice": "Unit price excl. VAT",
+    "stock": "Stock",
+    "lowStockThreshold": "Alert threshold",
+    "leadTimeDays": "Delivery time (days)",
+    "leadTimeHelp": "Shown when the stock is too low for a quote. 0 = unknown.",
+    "quantity": "Quantity",
+    "reason": "Reason",
+    "movementType": "Movement type",
+    "adjustStock": "Adjust stock",
+    "journal": "Stock journal",
+    "noMovement": "No movement for this part.",
+    "deactivate": "Deactivate",
+    "activate": "Reactivate",
+    "confirmDeactivate": "Are you sure you want to deactivate the part {{name}}?",
+    "confirmActivate": "Are you sure you want to reactivate the part {{name}}?",
+    "created": "The part {{name}} has been created.",
+    "updated": "The part {{name}} has been updated.",
+    "deactivated": "The part {{name}} has been deactivated.",
+    "activated": "The part {{name}} has been reactivated.",
+    "stockUpdated": "The stock of {{name}} has been updated.",
+    "movement": {
+      "IN": "In",
+      "OUT": "Out",
+      "ADJUSTMENT": "Adjustment"
+    },
+    "movementHelp": {
+      "IN": "Parts received: the quantity is added to the stock.",
+      "OUT": "Parts used: the quantity is removed from the stock.",
+      "ADJUSTMENT": "Inventory correction: enter the difference, positive or negative."
+    }
+  },
   "quote": {
     "title": "Quote",
     "loading": "Loading the quote",
     "none": "No quote for this appointment.",
     "create": "Create a quote",
     "edit": "Edit the quote",
+    "part": "Catalogue part (optional)",
+    "partPlaceholder": "Labour or free text if empty",
+    "partStock": "In stock: {{count}}",
+    "partHelp": "A part reserves its stock as soon as the quote is saved. It goes back to stock if the line is removed, the quote is refused or the appointment is cancelled.",
     "description": "Description",
     "quantity": "Quantity",
     "unitPrice": "Unit price",

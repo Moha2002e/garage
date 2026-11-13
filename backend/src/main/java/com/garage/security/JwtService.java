@@ -35,23 +35,32 @@ public class JwtService {
                 : Duration.ofHours(props.jwt().sessionHours());
     }
 
-    public String generate(UUID userId, boolean rememberMe) {
+    private static final String VERSION_CLAIM = "tv";
+
+    /** tokenVersion is stamped in the token so a logout-everywhere or password change revokes it instantly. */
+    public String generate(UUID userId, long tokenVersion, boolean rememberMe) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim(VERSION_CLAIM, tokenVersion)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(lifetime(rememberMe))))
                 .signWith(key)
                 .compact();
     }
 
-    /** @return the user id, or empty when the token is invalid or expired */
-    public Optional<UUID> parseUserId(String token) {
+    /** The user id and the token's stamped version, or empty when the token is invalid, expired or pre-dates this change. */
+    public Optional<Parsed> parse(String token) {
         try {
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-            return Optional.of(UUID.fromString(claims.getSubject()));
+            Number version = claims.get(VERSION_CLAIM, Number.class);
+            // A token issued before this feature existed has no "tv" claim: treated as version 0, like a fresh account.
+            return Optional.of(new Parsed(UUID.fromString(claims.getSubject()), version == null ? 0 : version.longValue()));
         } catch (JwtException | IllegalArgumentException e) {
             return Optional.empty();
         }
+    }
+
+    public record Parsed(UUID userId, long tokenVersion) {
     }
 }

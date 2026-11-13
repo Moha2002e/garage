@@ -9,7 +9,8 @@ import java.util.UUID;
 
 /**
  * Home page of ADMIN and EMPLOYEE: today's agenda (Europe/Paris day) and key figures.
- * The first seven fields are the original ones and never change; the others were added with the invoices.
+ * The first seven fields are the original ones and never change; the others were added with the invoices
+ * and the stock (lowStockParts: active parts at or below their alert threshold).
  */
 public record DashboardResponse(
         List<AppointmentResponse> today,
@@ -24,7 +25,8 @@ public record DashboardResponse(
         List<DashboardAppointment> upcoming,
         long unpaidInvoicesCount,
         BigDecimal unpaidInvoicesAmount,
-        long pendingInvoiceCount) {
+        long pendingInvoiceCount,
+        long lowStockParts) {
 
     /** Short form of an appointment: end = start + duration, clientName "First Last", vehicleLabel "Brand Model". */
     public record DashboardAppointment(UUID id, Instant start, Instant end, AppointmentStatus status,

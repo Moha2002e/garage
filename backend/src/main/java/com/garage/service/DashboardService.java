@@ -9,6 +9,7 @@ import com.garage.dto.DashboardResponse.DashboardAppointment;
 import com.garage.repository.AppointmentRepository;
 import com.garage.repository.ClientRepository;
 import com.garage.repository.InvoiceRepository;
+import com.garage.repository.PartRepository;
 import com.garage.repository.QuoteRepository;
 import com.garage.repository.VehicleRepository;
 import java.math.BigDecimal;
@@ -32,16 +33,19 @@ public class DashboardService {
     private final ClientRepository clientRepository;
     private final VehicleRepository vehicleRepository;
     private final InvoiceRepository invoiceRepository;
+    private final PartRepository partRepository;
 
     public DashboardService(AppointmentRepository appointmentRepository, AppointmentService appointmentService,
                             QuoteRepository quoteRepository, ClientRepository clientRepository,
-                            VehicleRepository vehicleRepository, InvoiceRepository invoiceRepository) {
+                            VehicleRepository vehicleRepository, InvoiceRepository invoiceRepository,
+                            PartRepository partRepository) {
         this.appointmentRepository = appointmentRepository;
         this.appointmentService = appointmentService;
         this.quoteRepository = quoteRepository;
         this.clientRepository = clientRepository;
         this.vehicleRepository = vehicleRepository;
         this.invoiceRepository = invoiceRepository;
+        this.partRepository = partRepository;
     }
 
     // ******************************************
@@ -94,7 +98,7 @@ public class DashboardService {
                 monthCompleted, monthRevenue,
                 todayShort, inProgressNow, upcoming,
                 invoiceRepository.countByStatus(InvoiceStatus.ISSUED), unpaidAmount,
-                invoiceRepository.countInvoiceable());
+                invoiceRepository.countInvoiceable(), partRepository.countLowStock());
     }
 
     private static DashboardAppointment toShort(Appointment a) {

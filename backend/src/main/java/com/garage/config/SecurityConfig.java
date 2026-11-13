@@ -35,6 +35,11 @@ public class SecurityConfig {
         "/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/reset-password"
     };
 
+    /** Areas where creating or changing data belongs to ADMIN and EMPLOYEE (users have their own rules above). */
+    private static final String[] WRITE_STAFF = {
+        "/api/appointments/**", "/api/clients/**", "/api/vehicles/**", "/api/invoices/**", "/api/parts/**"
+    };
+
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http, JwtService jwtService, UserRepository userRepository,
                                     AppProperties props) throws Exception {
@@ -52,6 +57,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH).permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Requests with a body: the role is checked here, before the controller. Without this,
+                        // @Valid rejects an invalid body with a 400 before @PreAuthorize can answer 403, so a
+                        // user without the right would see the validation errors. These rules only repeat what
+                        // @PreAuthorize already says (which stays the second barrier); keep both in step.
+                        .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/client").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, WRITE_STAFF).hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.PUT, WRITE_STAFF).hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.PATCH, WRITE_STAFF).hasAnyRole("ADMIN", "EMPLOYEE")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(new JwtAuthFilter(jwtService, userRepository, props.cookie().name()),

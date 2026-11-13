@@ -52,18 +52,19 @@ app:
   export-max-rows: 5000
   garage:
     capacity: ${GARAGE_CAPACITY:3}
-    # Letterhead of the invoice PDF. The defaults are fictitious examples: set the real values in .env.
+    # Letterhead of the invoice PDF. The defaults are FICTITIOUS demo data (practice project: not a real company,
+    # VAT number or bank account). Set real values in .env if this ever goes to production.
     company:
-      name: ${GARAGE_COMPANY_NAME:Garage Exemple}
-      address: ${GARAGE_COMPANY_ADDRESS:12 rue Exemple}
-      postalCode: ${GARAGE_COMPANY_POSTAL_CODE:0000}
-      city: ${GARAGE_COMPANY_CITY:Ville Exemple}
+      name: ${GARAGE_COMPANY_NAME:Garage Prestige}
+      address: ${GARAGE_COMPANY_ADDRESS:12 avenue des Arts}
+      postalCode: ${GARAGE_COMPANY_POSTAL_CODE:1000}
+      city: ${GARAGE_COMPANY_CITY:Bruxelles}
       country: ${GARAGE_COMPANY_COUNTRY:Belgique}
-      vatNumber: ${GARAGE_COMPANY_VAT_NUMBER:BE0000.000.000}
-      iban: ${GARAGE_COMPANY_IBAN:BE00 0000 0000 0000}
+      vatNumber: ${GARAGE_COMPANY_VAT_NUMBER:BE0123.456.789}
+      iban: ${GARAGE_COMPANY_IBAN:BE68 5390 0754 7034}
       bic: ${GARAGE_COMPANY_BIC:EXAMBEBB}
-      email: ${GARAGE_COMPANY_EMAIL:contact@garage-exemple.invalid}
-      phone: ${GARAGE_COMPANY_PHONE:+32 00 00 00 00}
+      email: ${GARAGE_COMPANY_EMAIL:contact@garage-prestige.example}
+      phone: ${GARAGE_COMPANY_PHONE:+32 2 555 01 00}
   invoice:
     # VAT percentage added to the invoice total (quote amounts are excluding VAT).
     vatRate: ${INVOICE_VAT_RATE:21}

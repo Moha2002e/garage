@@ -32,8 +32,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String token = readCookie(request);
         if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            jwtService.parseUserId(token)
-                    .flatMap(userRepository::findWithClientById)
+            jwtService.parse(token)
+                    .flatMap(parsed -> userRepository.findWithClientById(parsed.userId())
+                            // A mismatched version means the token was revoked (logout-everywhere or password change).
+                            .filter(user -> user.getTokenVersion() == parsed.tokenVersion()))
                     .filter(User::isEnabled)
                     .ifPresent(user -> {
                         var principal = new AuthUser(user.getId(), user.getEmail(), user.getRole(),

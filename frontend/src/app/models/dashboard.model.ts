@@ -28,4 +28,6 @@ export interface Dashboard {
   unpaidInvoicesCount: number;
   unpaidInvoicesAmount: number;
   pendingInvoiceCount: number;
+  // Pièces actives au seuil d'alerte ou en dessous.
+  lowStockParts: number;
 }

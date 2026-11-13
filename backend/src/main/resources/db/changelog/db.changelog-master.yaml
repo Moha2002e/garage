@@ -5,3 +5,5 @@ databaseChangeLog:
       file: db/changelog/002-evolutions.yaml
   - include:
       file: db/changelog/003-invoices.yaml
+  - include:
+      file: db/changelog/004-stock.yaml

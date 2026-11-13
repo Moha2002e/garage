@@ -1,20 +1,20 @@
 package com.garage.service;
 
-import com.garage.domain.Appointment;
 import com.garage.domain.Client;
 import com.garage.domain.Invoice;
 import com.garage.domain.InvoiceStatus;
 import com.garage.domain.Vehicle;
 import com.garage.dto.InvoiceDtos.InvoiceDetailResponse;
-import com.garage.dto.InvoiceDtos.InvoiceLineResponse;
 import com.garage.dto.InvoiceDtos.InvoiceResponse;
 import com.garage.dto.PageResponse;
 import com.garage.exception.BusinessException;
 import com.garage.exception.ConflictException;
 import com.garage.exception.NotFoundException;
+import com.garage.mapper.InvoiceMapper;
+import com.garage.mapper.MapperSupport;
 import com.garage.repository.InvoiceRepository;
+import com.garage.specification.InvoiceSpecifications;
 import com.garage.util.PageUtil;
-import jakarta.persistence.criteria.Join;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -34,9 +34,11 @@ public class InvoiceService {
     private static final Sort SORT = Sort.by(Sort.Direction.DESC, "issuedAt").and(Sort.by("number"));
 
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceMapper mapper;
 
-    public InvoiceService(InvoiceRepository invoiceRepository) {
+    public InvoiceService(InvoiceRepository invoiceRepository, InvoiceMapper mapper) {
         this.invoiceRepository = invoiceRepository;
+        this.mapper = mapper;
     }
 
     // ******************************************
@@ -48,7 +50,7 @@ public class InvoiceService {
     public PageResponse<InvoiceResponse> search(String q, InvoiceStatus status, int page, int size) {
         Pageable pageable = PageUtil.of(page, size, SORT);
         Page<Invoice> result = invoiceRepository.findAll(spec(q, status), pageable);
-        return PageResponse.from(result, InvoiceService::toResponse);
+        return PageResponse.from(result, mapper::toResponse);
     }
 
     /** Same filters as the list, capped, for exports (ADMIN only, enforced by the controller). */
@@ -59,7 +61,7 @@ public class InvoiceService {
 
     @Transactional(readOnly = true)
     public InvoiceDetailResponse get(UUID id) {
-        return toDetail(find(id));
+        return mapper.toDetail(find(id));
     }
 
     // ******************************************
@@ -93,7 +95,7 @@ public class InvoiceService {
         }
         invoice.setStatus(InvoiceStatus.PAID);
         invoice.setPaidAt(Instant.now());
-        return toDetail(invoice);
+        return mapper.toDetail(invoice);
     }
 
     private Invoice find(UUID id) {
@@ -102,53 +104,18 @@ public class InvoiceService {
     }
 
     private static Specification<Invoice> spec(String q, InvoiceStatus status) {
-        Specification<Invoice> spec = Specification.where(null);
         if (q != null && q.length() > MAX_QUERY_LENGTH) {
             throw new BusinessException("The search text cannot exceed 100 characters");
         }
-        if (q != null && !q.isBlank()) {
-            String like = PageUtil.likeTerm(q);
-            spec = spec.and((root, query, cb) -> {
-                Join<Invoice, Client> client = root.join("client");
-                Join<Invoice, Appointment> appointment = root.join("appointment");
-                Join<Appointment, Vehicle> vehicle = appointment.join("vehicle");
-                return cb.or(
-                        cb.like(cb.lower(root.get("number")), like, '\\'),
-                        cb.like(cb.lower(client.get("lastName")), like, '\\'),
-                        cb.like(cb.lower(client.get("firstName")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("brand")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("model")), like, '\\'),
-                        cb.like(cb.lower(vehicle.get("plate")), like, '\\'));
-            });
-        }
-        if (status != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
-        }
-        return spec;
+        return Specification.where(InvoiceSpecifications.matchesText(q))
+                .and(InvoiceSpecifications.hasStatus(status));
     }
 
     static String clientName(Client c) {
-        return (c.getFirstName() + " " + c.getLastName()).trim();
+        return MapperSupport.join(c.getFirstName(), c.getLastName());
     }
 
     static String vehicleLabel(Vehicle v) {
-        return (v.getBrand() + " " + v.getModel()).trim();
-    }
-
-    static InvoiceResponse toResponse(Invoice i) {
-        Appointment a = i.getAppointment();
-        Client c = i.getClient();
-        return new InvoiceResponse(i.getId(), i.getNumber(), i.getStatus(), a.getId(), c.getId(), clientName(c),
-                vehicleLabel(a.getVehicle()), a.getDate(), i.getTotal(), i.getIssuedAt(), i.getPaidAt());
-    }
-
-    static InvoiceDetailResponse toDetail(Invoice i) {
-        Appointment a = i.getAppointment();
-        Client c = i.getClient();
-        List<InvoiceLineResponse> lines = i.getLines().stream()
-                .map(l -> new InvoiceLineResponse(l.getDescription(), l.getQuantity(), l.getUnitPrice(), l.getTotal()))
-                .toList();
-        return new InvoiceDetailResponse(i.getId(), i.getNumber(), i.getStatus(), a.getId(), c.getId(), clientName(c),
-                vehicleLabel(a.getVehicle()), a.getDate(), i.getTotal(), i.getIssuedAt(), i.getPaidAt(), lines);
+        return MapperSupport.join(v.getBrand(), v.getModel());
     }
 }

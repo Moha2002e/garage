@@ -23,6 +23,7 @@ const ENTRIES: MenuEntry[] = [
   { key: 'menu.dashboard', icon: 'pi pi-home', route: '/dashboard', roles: ['ADMIN', 'EMPLOYEE'] },
   { key: 'menu.clients', icon: 'pi pi-users', route: '/clients', roles: ['ADMIN', 'EMPLOYEE'] },
   { key: 'menu.vehicles', icon: 'pi pi-car', route: '/vehicles', roles: ['ADMIN', 'EMPLOYEE'] },
+  { key: 'menu.parts', icon: 'pi pi-box', route: '/parts', roles: ['ADMIN', 'EMPLOYEE'] },
   { key: 'menu.appointments', icon: 'pi pi-calendar', route: '/appointments' },
   { key: 'menu.invoices', icon: 'pi pi-receipt', route: '/invoices', roles: ['ADMIN', 'EMPLOYEE'] },
   { key: 'menu.users', icon: 'pi pi-id-card', route: '/users', roles: ['ADMIN', 'EMPLOYEE'] },
